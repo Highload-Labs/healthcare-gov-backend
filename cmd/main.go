@@ -1,8 +1,6 @@
 package main
 
-import (
-	"github.com/Highload-Labs/healthcare-gov-backend/internal/transport"
-)
+import "github.com/Highload-Labs/healthcare-gov-backend/internal/transport"
 
 func main() {
 	server := transport.NewHTTP()
