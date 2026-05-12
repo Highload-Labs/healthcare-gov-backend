@@ -1,7 +1,10 @@
 package main
 
-import "fmt"
+import (
+	"github.com/Highload-Labs/healthcare-gov-backend/internal/transport"
+)
 
 func main() {
-	fmt.Println("Hello World")
+	server := transport.NewHTTP()
+	server.SetupAndServe()
 }
