@@ -13,4 +13,5 @@ func NewHandler(mux *http.ServeMux) *Handler {
 }
 
 func (h *Handler) InitializeRoutes() {
+	h.mux.HandleFunc("GET /healthz", h.HealthzGetHandler)
 }
