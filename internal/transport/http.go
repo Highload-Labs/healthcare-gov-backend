@@ -2,6 +2,7 @@ package transport
 
 import (
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/handler"
+	"github.com/Highload-Labs/healthcare-gov-backend/internal/service"
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/transport/middleware"
 	"log"
 	"net/http"
@@ -9,10 +10,7 @@ import (
 )
 
 type HTTP struct {
-	mux *http.ServeMux
 	srv *http.Server
-
-	handler *handler.Handler
 }
 
 func chain(h http.Handler, middlewares ...func(http.Handler) http.Handler) http.Handler {
@@ -22,8 +20,11 @@ func chain(h http.Handler, middlewares ...func(http.Handler) http.Handler) http.
 	return h
 }
 
-func NewHTTP() *HTTP {
+func NewHTTP(authRegisterSvc service.AuthRegisterService) *HTTP {
 	mux := http.NewServeMux()
+
+	h := handler.NewHandler(mux, authRegisterSvc)
+	h.InitializeRoutes()
 
 	wrappedMux := chain(
 		mux,
@@ -31,8 +32,6 @@ func NewHTTP() *HTTP {
 		middleware.RequestIDMiddleware,
 		middleware.LoggingMiddleware,
 	)
-
-	h := handler.NewHandler(mux)
 
 	srv := &http.Server{
 		Addr:              ":8080",
@@ -44,15 +43,11 @@ func NewHTTP() *HTTP {
 	}
 
 	return &HTTP{
-		mux:     mux,
-		srv:     srv,
-		handler: h,
+		srv: srv,
 	}
 }
 
-func (h *HTTP) SetupAndServe() {
-	h.handler.InitializeRoutes()
-
+func (h *HTTP) Serve() {
 	log.Println("server running on :8080")
 	if err := h.srv.ListenAndServe(); err != nil {
 		panic(err)
