@@ -1,8 +1,15 @@
 package main
 
-import "github.com/Highload-Labs/healthcare-gov-backend/internal/transport"
+import (
+	"github.com/Highload-Labs/healthcare-gov-backend/internal/repository/memory"
+	"github.com/Highload-Labs/healthcare-gov-backend/internal/service"
+	"github.com/Highload-Labs/healthcare-gov-backend/internal/transport"
+)
 
 func main() {
-	server := transport.NewHTTP()
-	server.SetupAndServe()
+	userRepository := memory.NewUserRepository()
+	authRegisterSvc := service.NewAuthRegisterService(userRepository)
+
+	server := transport.NewHTTP(authRegisterSvc)
+	server.Serve()
 }
