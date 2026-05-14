@@ -32,10 +32,11 @@ jobs:
       - name: Static Analysis (go vet)
         run: go vet ./...
 
+      - name: Install gosec
+        run: go install github.com/securego/gosec/v2/cmd/gosec@latest
+
       - name: Security Scanner (gosec)
-        uses: securego/gosec@master
-        with:
-          args: ./...
+        run: gosec ./...
 
       - name: Dependency Vulnerable Scanner (govulncheck)
         uses: golang/govulncheck-action@v1
