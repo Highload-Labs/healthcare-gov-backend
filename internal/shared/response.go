@@ -8,5 +8,5 @@ import (
 func SendJSONError(w http.ResponseWriter, responseStruct any, code int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
-	json.NewEncoder(w).Encode(responseStruct)
+	_ = json.NewEncoder(w).Encode(responseStruct)
 }
