@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"log"
+	"log/slog"
 	"net/http"
 )
 
@@ -10,11 +10,10 @@ func RecoveryMiddleware(next http.Handler) http.Handler {
 		func(w http.ResponseWriter, r *http.Request) {
 			defer func() {
 				if err := recover(); err != nil {
-					log.Printf(
-						"panic recovered: %v method=%s path=%s",
-						err,
-						r.Method,
-						r.URL.Path,
+					slog.Info(
+						"panic recovered", err,
+						"method", r.Method,
+						"path", r.URL.Path,
 					)
 
 					w.WriteHeader(http.StatusInternalServerError)
