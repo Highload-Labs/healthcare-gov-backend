@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches:
+    - main
+  pull_request:
+    branches:
+    - main
+
+jobs:
+  test-and-scan:
+    name: Static Analysis, Security Scanning and Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.3'
+        
+      - name: Run go formatting (gofmt)
+        run: |
+          if [ -n "$(gofmt -l .)" ]; then
+            echo "The following files are not formatted:"
+            gofmt -l .
+            exit 1
+          fi
+
+      - name: Static Analysis (go vet)
+        run: go vet ./...
+
+      - name: Security Scanner (gosec)
+        uses: securego/gosec@v2
+        with:
+          args: ./...
+
+      - name: Dependency Vulnerable Scanner (govulncheck)
+        uses: golang/govulncheck-action@v1
+        with:
+          go-version-input: 1.26.3
+          go-package: ./...
+
+      - name: Unit Tests (go test)
+        run: go test -v -race ./...
