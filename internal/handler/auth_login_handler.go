@@ -70,8 +70,8 @@ func (h *Handler) AuthLoginPostHandler(w http.ResponseWriter, r *http.Request) {
 		&dto.AuthLoginResponse{
 			Success: true,
 			Data: &dto.AuthLoginResponseData{
-				AccessToken:  "not-yet-implemented",
-				RefreshToken: "not-yet-implemented",
+				AccessToken:  "not-yet-implemented", // #nosec G101 -- placeholder until JWT implementation
+				RefreshToken: "not-yet-implemented", // #nosec G101 -- placeholder until JWT implementation
 				ExpiresIn:    3600,
 			},
 		},
