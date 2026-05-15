@@ -1,12 +1,13 @@
 package transport
 
 import (
-	"github.com/Highload-Labs/healthcare-gov-backend/internal/handler"
-	"github.com/Highload-Labs/healthcare-gov-backend/internal/service"
-	"github.com/Highload-Labs/healthcare-gov-backend/internal/transport/middleware"
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/Highload-Labs/healthcare-gov-backend/internal/handler"
+	"github.com/Highload-Labs/healthcare-gov-backend/internal/service"
+	"github.com/Highload-Labs/healthcare-gov-backend/internal/transport/middleware"
 )
 
 type HTTP struct {
@@ -20,10 +21,10 @@ func chain(h http.Handler, middlewares ...func(http.Handler) http.Handler) http.
 	return h
 }
 
-func NewHTTP(authRegisterSvc service.AuthRegisterService) *HTTP {
+func NewHTTP(authRegisterSvc service.AuthRegisterService, authLoginSvc service.AuthLoginService) *HTTP {
 	mux := http.NewServeMux()
 
-	h := handler.NewHandler(mux, authRegisterSvc)
+	h := handler.NewHandler(mux, authRegisterSvc, authLoginSvc)
 	h.InitializeRoutes()
 
 	wrappedMux := chain(

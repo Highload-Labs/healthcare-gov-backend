@@ -11,7 +11,7 @@ import (
 type AuthRegisterRequest struct {
 	Email    string `json:"email,required"`
 	Username string `json:"username"`
-	Password string `json:"password"`
+	Password string `json:"password,required"`
 }
 
 type AuthRegisterResponse struct {
