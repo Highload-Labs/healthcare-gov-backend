@@ -8,8 +8,10 @@ import (
 
 func main() {
 	userRepository := memory.NewUserRepository()
-	authRegisterSvc := service.NewAuthRegisterService(userRepository)
 
-	server := transport.NewHTTP(authRegisterSvc)
+	authRegisterSvc := service.NewAuthRegisterService(userRepository)
+	authLoginSvc := service.NewAuthLoginService(userRepository)
+
+	server := transport.NewHTTP(authRegisterSvc, authLoginSvc)
 	server.Serve()
 }
