@@ -24,7 +24,7 @@ func (m *mockAuthRegisterService) Register(
 }
 
 func TestAuthRegisterPostHandler_ValidationFailure(t *testing.T) {
-	h := NewHandler(nil, nil)
+	h := NewHandler(nil, nil, nil)
 
 	// Missing Email
 	body, _ := json.Marshal(dto.AuthRegisterRequest{Password: "pass1234"})
@@ -55,7 +55,7 @@ func BenchmarkAuthRegister_ValidationFailure(b *testing.B) {
 }
 
 func BenchmarkAuthRegisterPostHandler_ValidationFailure(b *testing.B) {
-	h := NewHandler(nil, nil)
+	h := NewHandler(nil, nil, nil)
 
 	body, _ := json.Marshal(dto.AuthRegisterRequest{Password: "pass1234"})
 	req := httptest.NewRequest(http.MethodPost, "/auth/register", bytes.NewBuffer(body))
@@ -74,7 +74,7 @@ func BenchmarkAuthRegisterPostHandler_Success(b *testing.B) {
 		},
 	}
 
-	h := NewHandler(nil, svc)
+	h := NewHandler(nil, svc, nil)
 
 	body, _ := json.Marshal(
 		dto.AuthRegisterRequest{
