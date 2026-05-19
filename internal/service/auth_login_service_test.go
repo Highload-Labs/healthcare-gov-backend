@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/Highload-Labs/healthcare-gov-backend/internal/config"
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/domain"
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/repository"
 	"golang.org/x/crypto/bcrypt"
@@ -12,11 +13,14 @@ import (
 
 func TestLogin_LoginSuccess(t *testing.T) {
 	repo := &mockRepo{}
+	cfg := config.Config{
+		BcryptCost: 4,
+	}
 
 	inputEmail := "test@gmail.com"
 	inputPassword := "test123456"
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(inputPassword), 4)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(inputPassword), cfg.BcryptCost)
 	if err != nil {
 		t.Error(err)
 	}
@@ -35,11 +39,14 @@ func TestLogin_LoginSuccess(t *testing.T) {
 
 func TestLogin_LoginFailed(t *testing.T) {
 	repo := &mockRepo{}
+	cfg := config.Config{
+		BcryptCost: 4,
+	}
 
 	inputEmail := "test@gmail.com"
 	inputPassword := "test123456"
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(inputPassword), 4)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(inputPassword), cfg.BcryptCost)
 	if err != nil {
 		t.Error(err)
 	}
@@ -81,7 +88,7 @@ func BenchmarkLogin(b *testing.B) {
 	inputEmail := "test@gmail.com"
 	inputPassword := "test123456"
 
-	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(inputPassword), 4)
+	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(inputPassword), config.GetConfig().BcryptCost)
 
 	repo := &mockRepo{
 		findByEmailFunc: func(email string) (*domain.User, error) {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/Highload-Labs/healthcare-gov-backend/internal/config"
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/domain"
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/repository"
 	"golang.org/x/crypto/bcrypt"
@@ -41,7 +42,7 @@ func (s *AuthRegisterServiceImpl) Register(ctx context.Context, input RegisterIn
 		return ErrEmailAlreadyUsed
 	}
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password), 4)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password), config.GetConfig().BcryptCost)
 	if err != nil {
 		return err
 	}
