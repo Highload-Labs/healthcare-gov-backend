@@ -1,10 +1,12 @@
 package transport
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"time"
 
+	"github.com/Highload-Labs/healthcare-gov-backend/internal/config"
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/handler"
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/service"
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/transport/middleware"
@@ -35,7 +37,7 @@ func NewHTTP(authRegisterSvc service.AuthRegisterService, authLoginSvc service.A
 	)
 
 	srv := &http.Server{
-		Addr:              ":8080",
+		Addr:              fmt.Sprintf(":%s", config.GetConfig().ServerPort),
 		Handler:           wrappedMux,
 		ReadTimeout:       5 * time.Second,
 		ReadHeaderTimeout: 2 * time.Second,
