@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/Highload-Labs/healthcare-gov-backend/internal/config"
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/domain"
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/repository"
 )
@@ -25,7 +26,12 @@ func TestRegister_EmailAlreadyExists(t *testing.T) {
 			return &domain.User{Email: email}, nil // User found
 		},
 	}
-	svc := NewAuthRegisterService(repo)
+
+	cfg := &config.Config{
+		BcryptCost: 4,
+	}
+
+	svc := NewAuthRegisterService(cfg, repo)
 
 	err := svc.Register(context.Background(), RegisterInput{Email: "test@test.com"})
 	if !errors.Is(err, ErrEmailAlreadyUsed) {
@@ -38,7 +44,12 @@ func BenchmarkRegister(b *testing.B) {
 		findByEmailFunc: func(e string) (*domain.User, error) { return nil, repository.ErrUserNotFound },
 		createFunc:      func(u domain.User) error { return nil },
 	}
-	svc := NewAuthRegisterService(repo)
+
+	cfg := &config.Config{
+		BcryptCost: 4,
+	}
+
+	svc := NewAuthRegisterService(cfg, repo)
 	input := RegisterInput{Email: "a@b.com", Username: "user", Password: "password123"}
 
 	for b.Loop() {

@@ -31,7 +31,7 @@ func (h *Handler) AuthLoginPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.authLoginSvc.Login(
+	accessToken, refreshToken, err := h.authLoginSvc.Login(
 		r.Context(), service.LoginInput{
 			Email:    req.Email,
 			Password: req.Password,
@@ -70,9 +70,9 @@ func (h *Handler) AuthLoginPostHandler(w http.ResponseWriter, r *http.Request) {
 		&dto.AuthLoginResponse{
 			Success: true,
 			Data: &dto.AuthLoginResponseData{
-				AccessToken:  "not-yet-implemented", // #nosec G101 -- placeholder until JWT implementation
-				RefreshToken: "not-yet-implemented", // #nosec G101 -- placeholder until JWT implementation
-				ExpiresIn:    3600,
+				AccessToken:  accessToken,
+				RefreshToken: refreshToken,
+				ExpiresIn:    int64(h.config.AccessTokenExpired.Seconds()),
 			},
 		},
 	)
