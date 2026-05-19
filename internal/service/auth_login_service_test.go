@@ -13,11 +13,14 @@ import (
 
 func TestLogin_LoginSuccess(t *testing.T) {
 	repo := &mockRepo{}
+	cfg := config.Config{
+		BcryptCost: 4,
+	}
 
 	inputEmail := "test@gmail.com"
 	inputPassword := "test123456"
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(inputPassword), config.GetConfig().BcryptCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(inputPassword), cfg.BcryptCost)
 	if err != nil {
 		t.Error(err)
 	}
@@ -36,11 +39,14 @@ func TestLogin_LoginSuccess(t *testing.T) {
 
 func TestLogin_LoginFailed(t *testing.T) {
 	repo := &mockRepo{}
+	cfg := config.Config{
+		BcryptCost: 4,
+	}
 
 	inputEmail := "test@gmail.com"
 	inputPassword := "test123456"
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(inputPassword), config.GetConfig().BcryptCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(inputPassword), cfg.BcryptCost)
 	if err != nil {
 		t.Error(err)
 	}
