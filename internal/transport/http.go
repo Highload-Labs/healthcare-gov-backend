@@ -26,7 +26,9 @@ func chain(h http.Handler, middlewares ...func(http.Handler) http.Handler) http.
 func NewHTTP(authRegisterSvc service.AuthRegisterService, authLoginSvc service.AuthLoginService) *HTTP {
 	mux := http.NewServeMux()
 
-	h := handler.NewHandler(mux, authRegisterSvc, authLoginSvc)
+	cfg := config.GetConfig()
+
+	h := handler.NewHandler(mux, cfg, authRegisterSvc, authLoginSvc)
 	h.InitializeRoutes()
 
 	wrappedMux := chain(

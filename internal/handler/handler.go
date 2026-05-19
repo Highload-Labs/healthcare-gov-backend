@@ -3,11 +3,13 @@ package handler
 import (
 	"net/http"
 
+	"github.com/Highload-Labs/healthcare-gov-backend/internal/config"
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/service"
 )
 
 type Handler struct {
-	mux *http.ServeMux
+	mux    *http.ServeMux
+	config *config.Config
 
 	authRegisterSvc service.AuthRegisterService
 	authLoginSvc    service.AuthLoginService
@@ -15,11 +17,13 @@ type Handler struct {
 
 func NewHandler(
 	mux *http.ServeMux,
+	cfg *config.Config,
 	authRegisterSvc service.AuthRegisterService,
 	authLoginSvc service.AuthLoginService,
 ) *Handler {
 	return &Handler{
 		mux:             mux,
+		config:          cfg,
 		authRegisterSvc: authRegisterSvc,
 		authLoginSvc:    authLoginSvc,
 	}

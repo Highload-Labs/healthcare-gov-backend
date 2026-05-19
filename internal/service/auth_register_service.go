@@ -7,7 +7,6 @@ import (
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/config"
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/domain"
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/repository"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type AuthRegisterService interface {
@@ -15,11 +14,14 @@ type AuthRegisterService interface {
 }
 
 type AuthRegisterServiceImpl struct {
+	config *config.Config
+
 	userRepository repository.UserRepository
 }
 
-func NewAuthRegisterService(userRepo repository.UserRepository) AuthRegisterService {
+func NewAuthRegisterService(config *config.Config, userRepo repository.UserRepository) AuthRegisterService {
 	return &AuthRegisterServiceImpl{
+		config:         config,
 		userRepository: userRepo,
 	}
 }
@@ -42,18 +44,18 @@ func (s *AuthRegisterServiceImpl) Register(ctx context.Context, input RegisterIn
 		return ErrEmailAlreadyUsed
 	}
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password), config.GetConfig().BcryptCost)
+	newUser := domain.User{
+		Email:    input.Email,
+		Username: input.Username,
+		Password: input.Password,
+	}
+
+	err = newUser.HashPassword(s.config.BcryptCost)
 	if err != nil {
 		return err
 	}
 
-	err = s.userRepository.Create(
-		ctx, domain.User{
-			Email:    input.Email,
-			Username: input.Username,
-			Password: string(hashedPassword),
-		},
-	)
+	err = s.userRepository.Create(ctx, newUser)
 
 	return err
 }

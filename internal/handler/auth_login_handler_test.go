@@ -8,23 +8,25 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/Highload-Labs/healthcare-gov-backend/internal/config"
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/handler/dto"
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/service"
 )
 
 type mockAuthLoginService struct {
-	loginFunc func(input service.LoginInput) error
+	loginFunc func(input service.LoginInput) (string, string, error)
 }
 
-func (m *mockAuthLoginService) Login(
-	ctx context.Context,
-	input service.LoginInput,
-) error {
+func (m *mockAuthLoginService) Login(ctx context.Context, input service.LoginInput) (
+	accessToken string,
+	refreshToken string,
+	err error,
+) {
 	return m.loginFunc(input)
 }
 
 func TestAuthLoginPostHandler_ValidationFailure(t *testing.T) {
-	h := NewHandler(nil, nil, nil)
+	h := NewHandler(nil, nil, nil, nil)
 
 	body, _ := json.Marshal(dto.AuthLoginRequest{Password: "pass1234"})
 	req := httptest.NewRequest("POST", "/auth/login", bytes.NewBuffer(body))
@@ -55,12 +57,16 @@ func BenchmarkAuthLogin_ValidationFailure(b *testing.B) {
 
 func BenchmarkAuthLoginPostHandler_Success(b *testing.B) {
 	svc := &mockAuthLoginService{
-		loginFunc: func(input service.LoginInput) error {
-			return nil
+		loginFunc: func(input service.LoginInput) (string, string, error) {
+			return "access", "refresh", nil
 		},
 	}
 
-	h := NewHandler(nil, nil, svc)
+	cfg := &config.Config{
+		AccessTokenExpired: 3600,
+	}
+
+	h := NewHandler(nil, cfg, nil, svc)
 
 	body, _ := json.Marshal(
 		dto.AuthRegisterRequest{
