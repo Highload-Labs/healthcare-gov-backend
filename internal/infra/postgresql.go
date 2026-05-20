@@ -35,10 +35,10 @@ func NewPostgresql(cfg *config.Config) *Postgresql {
 }
 
 func CreatePostgresqlConnection(param pgConnParam) *sql.DB {
-	connStr := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=%s", param.User, param.Pass, param.DBName, param.SSLMode)
+	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s", param.Host, param.Port, param.User, param.Pass, param.DBName, param.SSLMode)
 
 	if param.Pass == "" {
-		connStr = fmt.Sprintf("user=%s dbname=%s sslmode=%s", param.User, param.DBName, param.SSLMode)
+		connStr = fmt.Sprintf("host=%s port=%s user=%s dbname=%s sslmode=%s", param.Host, param.Port, param.User, param.DBName, param.SSLMode)
 	}
 
 	db, err := sql.Open("postgres", connStr)
