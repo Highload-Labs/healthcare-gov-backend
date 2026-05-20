@@ -12,13 +12,15 @@ import (
 
 type mockRepo struct {
 	findByEmailFunc func(email string) (*domain.User, error)
-	createFunc      func(user domain.User) error
+	createFunc      func(user domain.User) (string, error)
 }
 
 func (m *mockRepo) FindByEmail(ctx context.Context, e string) (*domain.User, error) {
 	return m.findByEmailFunc(e)
 }
-func (m *mockRepo) Create(ctx context.Context, u domain.User) error { return m.createFunc(u) }
+func (m *mockRepo) Create(ctx context.Context, u domain.User) (string, error) {
+	return m.createFunc(u)
+}
 
 func TestRegister_EmailAlreadyExists(t *testing.T) {
 	repo := &mockRepo{
@@ -33,16 +35,20 @@ func TestRegister_EmailAlreadyExists(t *testing.T) {
 
 	svc := NewAuthRegisterService(cfg, repo)
 
-	err := svc.Register(context.Background(), RegisterInput{Email: "test@test.com"})
+	userID, err := svc.Register(context.Background(), RegisterInput{Email: "test@test.com"})
 	if !errors.Is(err, ErrEmailAlreadyUsed) {
 		t.Errorf("expected ErrEmailAlreadyUsed, got %v", err)
+	}
+
+	if userID != "" {
+		t.Errorf("expected empty user ID, got %v", userID)
 	}
 }
 
 func BenchmarkRegister(b *testing.B) {
 	repo := &mockRepo{
 		findByEmailFunc: func(e string) (*domain.User, error) { return nil, repository.ErrUserNotFound },
-		createFunc:      func(u domain.User) error { return nil },
+		createFunc:      func(u domain.User) (string, error) { return "", nil },
 	}
 
 	cfg := &config.Config{
@@ -53,6 +59,6 @@ func BenchmarkRegister(b *testing.B) {
 	input := RegisterInput{Email: "a@b.com", Username: "user", Password: "password123"}
 
 	for b.Loop() {
-		_ = svc.Register(context.Background(), input)
+		_, _ = svc.Register(context.Background(), input)
 	}
 }

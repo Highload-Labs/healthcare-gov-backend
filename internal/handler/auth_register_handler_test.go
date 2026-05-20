@@ -13,13 +13,13 @@ import (
 )
 
 type mockAuthRegisterService struct {
-	registerFunc func(input service.RegisterInput) error
+	registerFunc func(input service.RegisterInput) (string, error)
 }
 
 func (m *mockAuthRegisterService) Register(
 	ctx context.Context,
 	input service.RegisterInput,
-) error {
+) (string, error) {
 	return m.registerFunc(input)
 }
 
@@ -69,8 +69,8 @@ func BenchmarkAuthRegisterPostHandler_ValidationFailure(b *testing.B) {
 
 func BenchmarkAuthRegisterPostHandler_Success(b *testing.B) {
 	svc := &mockAuthRegisterService{
-		registerFunc: func(input service.RegisterInput) error {
-			return nil
+		registerFunc: func(input service.RegisterInput) (string, error) {
+			return "", nil
 		},
 	}
 
