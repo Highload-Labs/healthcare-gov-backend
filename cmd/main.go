@@ -6,7 +6,6 @@ import (
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/repository"
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/service"
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/transport"
-	_ "github.com/lib/pq"
 )
 
 func main() {
