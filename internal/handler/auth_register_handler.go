@@ -32,7 +32,7 @@ func (h *Handler) AuthRegisterPostHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	err = h.authRegisterSvc.Register(
+	userID, err := h.authRegisterSvc.Register(
 		r.Context(), service.RegisterInput{
 			Email:    req.Email,
 			Username: req.Username,
@@ -72,7 +72,7 @@ func (h *Handler) AuthRegisterPostHandler(w http.ResponseWriter, r *http.Request
 		&dto.AuthRegisterResponse{
 			Success: true,
 			Data: &dto.AuthRegisterResponseData{
-				UserID:    "not-yet-implemented",
+				UserID:    userID,
 				CreatedAt: time.Now(),
 			},
 		},

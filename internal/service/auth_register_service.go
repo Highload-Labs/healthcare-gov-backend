@@ -10,7 +10,7 @@ import (
 )
 
 type AuthRegisterService interface {
-	Register(ctx context.Context, input RegisterInput) error
+	Register(ctx context.Context, input RegisterInput) (string, error)
 }
 
 type AuthRegisterServiceImpl struct {
@@ -34,14 +34,14 @@ type RegisterInput struct {
 
 var ErrEmailAlreadyUsed = errors.New("email already used")
 
-func (s *AuthRegisterServiceImpl) Register(ctx context.Context, input RegisterInput) error {
+func (s *AuthRegisterServiceImpl) Register(ctx context.Context, input RegisterInput) (string, error) {
 	user, err := s.userRepository.FindByEmail(ctx, input.Email)
 	if err != nil && !errors.Is(err, repository.ErrUserNotFound) {
-		return err
+		return "", err
 	}
 
 	if user != nil {
-		return ErrEmailAlreadyUsed
+		return "", ErrEmailAlreadyUsed
 	}
 
 	newUser := domain.User{
@@ -52,10 +52,13 @@ func (s *AuthRegisterServiceImpl) Register(ctx context.Context, input RegisterIn
 
 	err = newUser.HashPassword(s.config.BcryptCost)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	err = s.userRepository.Create(ctx, newUser)
+	userID, err := s.userRepository.Create(ctx, newUser)
+	if err != nil {
+		return "", err
+	}
 
-	return err
+	return userID, err
 }

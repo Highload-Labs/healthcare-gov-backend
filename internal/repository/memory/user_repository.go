@@ -2,9 +2,10 @@ package memory
 
 import (
 	"context"
+	"sync"
+
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/domain"
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/repository"
-	"sync"
 )
 
 type userRepository struct {
@@ -18,11 +19,11 @@ func NewUserRepository() repository.UserRepository {
 	}
 }
 
-func (r *userRepository) Create(ctx context.Context, user domain.User) error {
+func (r *userRepository) Create(ctx context.Context, user domain.User) (string, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.users[user.Email] = user
-	return nil
+	return user.Email, nil
 }
 
 func (r *userRepository) FindByEmail(ctx context.Context, email string) (*domain.User, error) {
