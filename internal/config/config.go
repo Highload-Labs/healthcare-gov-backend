@@ -13,6 +13,7 @@ import (
 
 type Config struct {
 	ServerPort string
+	GoEnv      string
 	BcryptCost int
 
 	DatabaseHost    string
@@ -43,6 +44,11 @@ func GetConfig() *Config {
 			serverPort := os.Getenv("SERVER_PORT")
 			if serverPort == "" {
 				serverPort = "8080"
+			}
+
+			goEnv := os.Getenv("GO_ENV")
+			if goEnv == "" {
+				goEnv = "development"
 			}
 
 			bcryptCost, err := strconv.Atoi(os.Getenv("BCRYPT_COST"))
@@ -120,6 +126,7 @@ func GetConfig() *Config {
 
 			config = &Config{
 				ServerPort:           serverPort,
+				GoEnv:                goEnv,
 				BcryptCost:           bcryptCost,
 				DatabaseHost:         databaseHost,
 				DatabasePort:         databasePost,

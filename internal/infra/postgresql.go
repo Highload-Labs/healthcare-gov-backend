@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/config"
 	_ "github.com/lib/pq"
@@ -64,6 +65,11 @@ func CreatePostgresqlConnection(param pgConnParam) *sql.DB {
 		slog.Error("database error", "error", err.Error())
 		return nil
 	}
+
+	db.SetMaxIdleConns(18)
+	db.SetMaxOpenConns(18)
+	db.SetConnMaxIdleTime(10 * time.Minute)
+	db.SetConnMaxLifetime(30 * time.Minute)
 
 	return db
 }

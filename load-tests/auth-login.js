@@ -5,6 +5,8 @@ export const options = {
     vus: 150,
     duration: '30s',
 
+    summaryTrendStats: ['min', 'avg', 'med', 'max', 'p(50)', 'p(95)', 'p(99)'],
+
     thresholds: {
         http_req_failed: ['rate<0.01'],
         http_req_duration: [
