@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	_ "net/http/pprof"
 	"time"
 
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/config"
@@ -54,6 +55,11 @@ func NewHTTP(authRegisterSvc service.AuthRegisterService, authLoginSvc service.A
 
 func (h *HTTP) Serve() {
 	log.Println("server running on :8080")
+
+	go func() {
+		log.Println(http.ListenAndServe("127.0.0.1:6060", nil))
+	}()
+
 	if err := h.srv.ListenAndServe(); err != nil {
 		panic(err)
 	}
