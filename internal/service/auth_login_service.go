@@ -12,18 +12,6 @@ type AuthLoginService interface {
 	Login(ctx context.Context, input LoginInput) (accessToken string, refreshToken string, err error)
 }
 
-type AuthLoginServiceImpl struct {
-	userRepository repository.UserRepository
-	jwtService     AuthJwtService
-}
-
-func NewAuthLoginService(userRepo repository.UserRepository, jwtService AuthJwtService) AuthLoginService {
-	return &AuthLoginServiceImpl{
-		userRepository: userRepo,
-		jwtService:     jwtService,
-	}
-}
-
 type LoginInput struct {
 	Email    string
 	Password string
@@ -31,7 +19,7 @@ type LoginInput struct {
 
 var ErrInvalidCredentials = errors.New("invalid credentials")
 
-func (s *AuthLoginServiceImpl) Login(ctx context.Context, input LoginInput) (
+func (s *AuthServiceImpl) Login(ctx context.Context, input LoginInput) (
 	accessToken string,
 	refreshToken string,
 	err error,
@@ -53,12 +41,12 @@ func (s *AuthLoginServiceImpl) Login(ctx context.Context, input LoginInput) (
 		return "", "", err
 	}
 
-	accessToken, err = s.jwtService.GenerateAccessToken(user.ID, user.Email, user.Username)
+	accessToken, err = s.GenerateAccessToken(user.ID, user.Email, user.Username)
 	if err != nil {
 		return "", "", err
 	}
 
-	refreshToken, err = s.jwtService.GenerateRefreshToken(user.ID)
+	refreshToken, err = s.GenerateRefreshToken(user.ID)
 	if err != nil {
 		return "", "", err
 	}

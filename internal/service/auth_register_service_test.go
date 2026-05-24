@@ -33,7 +33,10 @@ func TestRegister_EmailAlreadyExists(t *testing.T) {
 		BcryptCost: 4,
 	}
 
-	svc := NewAuthRegisterService(cfg, repo)
+	svc := &AuthServiceImpl{
+		config:         cfg,
+		userRepository: repo,
+	}
 
 	userID, err := svc.Register(context.Background(), RegisterInput{Email: "test@test.com"})
 	if !errors.Is(err, ErrEmailAlreadyUsed) {
@@ -55,7 +58,11 @@ func BenchmarkRegister(b *testing.B) {
 		BcryptCost: 4,
 	}
 
-	svc := NewAuthRegisterService(cfg, repo)
+	svc := &AuthServiceImpl{
+		config:         cfg,
+		userRepository: repo,
+	}
+
 	input := RegisterInput{Email: "a@b.com", Username: "user", Password: "password123"}
 
 	for b.Loop() {

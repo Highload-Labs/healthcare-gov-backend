@@ -5,7 +5,30 @@ import (
 	"net/http"
 )
 
-func SendJSONError(w http.ResponseWriter, responseStruct any, code int) {
+type ErrorResponse struct {
+	Success bool   `json:"success"`
+	Code    string `json:"code"`
+	Message string `json:"message"`
+}
+
+func getCode(code int) string {
+	switch code {
+	case http.StatusInternalServerError:
+		return INTERNAL_ERROR_CODE
+	case http.StatusUnauthorized:
+		return UNAUTHORIZED_CODE
+	case http.StatusConflict:
+		return CONFLICT_CODE
+	default:
+		return INTERNAL_ERROR_CODE
+	}
+}
+
+func SendJSONError(w http.ResponseWriter, responseStruct ErrorResponse, code int) {
+	if responseStruct.Code == "" {
+		responseStruct.Code = getCode(code)
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 	_ = json.NewEncoder(w).Encode(responseStruct)

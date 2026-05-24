@@ -3,7 +3,6 @@ package service
 import (
 	"time"
 
-	"github.com/Highload-Labs/healthcare-gov-backend/internal/config"
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/shared"
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -13,21 +12,13 @@ type AuthJwtService interface {
 	GenerateRefreshToken(userId string) (string, error)
 }
 
-type AuthJwtServiceImpl struct {
-	config *config.Config
-}
-
-func NewAuthJwtService(config *config.Config) AuthJwtService {
-	return &AuthJwtServiceImpl{config: config}
-}
-
 type Claims struct {
 	Email    string `json:"email,omitempty"`
 	Username string `json:"username,omitempty"`
 	jwt.RegisteredClaims
 }
 
-func (s *AuthJwtServiceImpl) GenerateAccessToken(userId, email, username string) (string, error) {
+func (s *AuthServiceImpl) GenerateAccessToken(userId, email, username string) (string, error) {
 	claims := Claims{
 		Email:    email,
 		Username: username,
@@ -48,7 +39,7 @@ func (s *AuthJwtServiceImpl) GenerateAccessToken(userId, email, username string)
 	return tokenString, nil
 }
 
-func (s *AuthJwtServiceImpl) GenerateRefreshToken(userId string) (string, error) {
+func (s *AuthServiceImpl) GenerateRefreshToken(userId string) (string, error) {
 	token := jwt.NewWithClaims(
 		jwt.SigningMethodHS256, jwt.RegisteredClaims{
 			Issuer:    shared.ISSUER,

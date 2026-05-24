@@ -17,8 +17,6 @@ type AuthRegisterRequest struct {
 type AuthRegisterResponse struct {
 	Success bool                      `json:"success"`
 	Data    *AuthRegisterResponseData `json:"data,omitempty"`
-	Code    string                    `json:"code,omitempty"`
-	Message string                    `json:"message,omitempty"`
 }
 
 type AuthRegisterResponseData struct {

@@ -16,7 +16,10 @@ func (h *Handler) AuthLoginPostHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		shared.SendJSONError(
 			w,
-			dto.AuthLoginResponse{Success: false, Code: "BAD_REQUEST", Message: "Missing required fields"},
+			shared.ErrorResponse{
+				Success: false,
+				Message: "Missing required fields",
+			},
 			http.StatusBadRequest,
 		)
 		return
@@ -25,13 +28,16 @@ func (h *Handler) AuthLoginPostHandler(w http.ResponseWriter, r *http.Request) {
 	if err = req.Validate(); err != nil {
 		shared.SendJSONError(
 			w,
-			dto.AuthLoginResponse{Success: false, Code: "BAD_REQUEST", Message: "Missing required fields"},
+			shared.ErrorResponse{
+				Success: false,
+				Message: "Missing required fields",
+			},
 			http.StatusBadRequest,
 		)
 		return
 	}
 
-	accessToken, refreshToken, err := h.authLoginSvc.Login(
+	accessToken, refreshToken, err := h.authService.Login(
 		r.Context(), service.LoginInput{
 			Email:    req.Email,
 			Password: req.Password,
@@ -42,9 +48,8 @@ func (h *Handler) AuthLoginPostHandler(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, service.ErrInvalidCredentials) {
 			shared.SendJSONError(
 				w,
-				dto.AuthLoginResponse{
+				shared.ErrorResponse{
 					Success: false,
-					Code:    "UNAUTHORIZED",
 					Message: "Incorrect email or password.",
 				},
 				http.StatusUnauthorized,
@@ -54,9 +59,8 @@ func (h *Handler) AuthLoginPostHandler(w http.ResponseWriter, r *http.Request) {
 
 		shared.SendJSONError(
 			w,
-			dto.AuthLoginResponse{
+			shared.ErrorResponse{
 				Success: false,
-				Code:    "INTERNAL_ERROR",
 				Message: "Internal Server Error.",
 			},
 			http.StatusInternalServerError,
@@ -80,9 +84,8 @@ func (h *Handler) AuthLoginPostHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		shared.SendJSONError(
 			w,
-			dto.AuthLoginResponse{
+			shared.ErrorResponse{
 				Success: false,
-				Code:    "INTERNAL_ERROR",
 				Message: "Internal Server Error.",
 			},
 			http.StatusInternalServerError,

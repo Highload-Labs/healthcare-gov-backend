@@ -19,8 +19,6 @@ type AuthLoginResponseData struct {
 type AuthLoginResponse struct {
 	Success bool                   `json:"success"`
 	Data    *AuthLoginResponseData `json:"data,omitempty"`
-	Code    string                 `json:"code,omitempty"`
-	Message string                 `json:"message,omitempty"`
 }
 
 func (r *AuthLoginRequest) Validate() error {

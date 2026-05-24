@@ -11,21 +11,18 @@ type Handler struct {
 	mux    *http.ServeMux
 	config *config.Config
 
-	authRegisterSvc service.AuthRegisterService
-	authLoginSvc    service.AuthLoginService
+	authService service.AuthService
 }
 
 func NewHandler(
 	mux *http.ServeMux,
 	cfg *config.Config,
-	authRegisterSvc service.AuthRegisterService,
-	authLoginSvc service.AuthLoginService,
+	authService service.AuthService,
 ) *Handler {
 	return &Handler{
-		mux:             mux,
-		config:          cfg,
-		authRegisterSvc: authRegisterSvc,
-		authLoginSvc:    authLoginSvc,
+		mux:         mux,
+		config:      cfg,
+		authService: authService,
 	}
 }
 
@@ -33,4 +30,5 @@ func (h *Handler) InitializeRoutes() {
 	h.mux.HandleFunc("GET /healthz", h.HealthzGetHandler)
 	h.mux.HandleFunc("POST /auth/register", h.AuthRegisterPostHandler)
 	h.mux.HandleFunc("POST /auth/login", h.AuthLoginPostHandler)
+	h.mux.HandleFunc("GET /auth/refresh", h.AuthRefreshHandler)
 }

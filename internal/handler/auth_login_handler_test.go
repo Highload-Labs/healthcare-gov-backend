@@ -14,7 +14,14 @@ import (
 )
 
 type mockAuthLoginService struct {
+	service.AuthService
 	loginFunc func(input service.LoginInput) (string, string, error)
+}
+
+var mockAuth = &mockAuthLoginService{
+	loginFunc: func(input service.LoginInput) (string, string, error) {
+		return "", "", nil
+	},
 }
 
 func (m *mockAuthLoginService) Login(ctx context.Context, input service.LoginInput) (
@@ -26,7 +33,7 @@ func (m *mockAuthLoginService) Login(ctx context.Context, input service.LoginInp
 }
 
 func TestAuthLoginPostHandler_ValidationFailure(t *testing.T) {
-	h := NewHandler(nil, nil, nil, nil)
+	h := &Handler{}
 
 	body, _ := json.Marshal(dto.AuthLoginRequest{Password: "pass1234"})
 	req := httptest.NewRequest("POST", "/auth/login", bytes.NewBuffer(body))
@@ -56,17 +63,14 @@ func BenchmarkAuthLogin_ValidationFailure(b *testing.B) {
 }
 
 func BenchmarkAuthLoginPostHandler_Success(b *testing.B) {
-	svc := &mockAuthLoginService{
-		loginFunc: func(input service.LoginInput) (string, string, error) {
-			return "access", "refresh", nil
-		},
-	}
-
 	cfg := &config.Config{
 		AccessTokenExpired: 3600,
 	}
 
-	h := NewHandler(nil, cfg, nil, svc)
+	h := &Handler{
+		config:      cfg,
+		authService: mockAuth,
+	}
 
 	body, _ := json.Marshal(
 		dto.AuthRegisterRequest{
