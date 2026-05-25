@@ -60,7 +60,4 @@ export default function () {
     if (!statusOk) {
         console.error(`Execution fault! VU ${__VU} Iteration ${__ITER} yielded Status: ${res.status}. Body: ${res.body}`);
     }
-
-    // Give your server's Bcrypt workers room to switch contexts between iterations
-    sleep(0.1);
 }
