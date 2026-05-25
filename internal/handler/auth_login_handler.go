@@ -65,7 +65,6 @@ func (h *Handler) AuthLoginPostHandler(w http.ResponseWriter, r *http.Request) {
 			},
 			http.StatusInternalServerError,
 		)
-		panic(err)
 		return
 	}
 
@@ -91,7 +90,6 @@ func (h *Handler) AuthLoginPostHandler(w http.ResponseWriter, r *http.Request) {
 			},
 			http.StatusInternalServerError,
 		)
-		panic(err)
 		return
 	}
 }
