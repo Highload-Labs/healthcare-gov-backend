@@ -6,35 +6,40 @@ import (
 	"net/http"
 	"runtime/debug"
 
-	"github.com/Highload-Labs/healthcare-gov-backend/internal/config"
+	"github.com/Highload-Labs/healthcare-gov-backend/internal/shared"
 )
 
-func RecoveryMiddleware(next http.Handler) http.Handler {
-	cfg := config.GetConfig()
+func RecoveryMiddleware(goEnv string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(
+			func(w http.ResponseWriter, r *http.Request) {
+				defer func() {
+					if err := recover(); err != nil {
+						stackTrace := debug.Stack()
 
-	return http.HandlerFunc(
-		func(w http.ResponseWriter, r *http.Request) {
-			defer func() {
-				if err := recover(); err != nil {
-					stackTrace := debug.Stack()
-					if cfg.GoEnv == "development" {
-						slog.Error("panic recovered", "error", err, "method", r.Method, "path", r.URL.Path)
-						fmt.Printf("\n--- STACK TRACE ---\n%s\n-------------------\n", stackTrace)
-					} else {
-						slog.Error(
-							"panic recovered",
-							"error", err,
-							"method", r.Method,
-							"path", r.URL.Path,
-							"stack", string(stackTrace),
+						if goEnv == "development" {
+							slog.Error("panic recovered", "error", err, "method", r.Method, "path", r.URL.Path)
+							fmt.Printf("\n--- STACK TRACE ---\n%s\n-------------------\n", stackTrace)
+						} else {
+							slog.Error(
+								"panic recovered",
+								"error", err,
+								"method", r.Method,
+								"path", r.URL.Path,
+								"stack", string(stackTrace),
+							)
+						}
+
+						shared.SendJSONError(
+							w,
+							shared.ErrorResponse{Success: false, Message: "Internal Server Error."},
+							http.StatusInternalServerError,
 						)
 					}
+				}()
 
-					w.WriteHeader(http.StatusInternalServerError)
-				}
-			}()
-
-			next.ServeHTTP(w, r)
-		},
-	)
+				next.ServeHTTP(w, r)
+			},
+		)
+	}
 }

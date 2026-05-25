@@ -6,11 +6,12 @@ import (
 
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/shared"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
 
 type AuthJwtService interface {
 	GenerateAccessToken(userId, email, username string) (string, error)
-	GenerateRefreshToken(userId string) (string, error)
+	GenerateRefreshToken(userId string, expiresAt time.Time) (string, error)
 	VerifyRefreshToken(tokenString string) (*jwt.RegisteredClaims, error)
 }
 
@@ -31,6 +32,7 @@ func (s *AuthServiceImpl) GenerateAccessToken(userId, email, username string) (s
 			Subject:   userId,
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.config.AccessTokenExpired)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			ID:        uuid.New().String(),
 		},
 	}
 
@@ -43,13 +45,14 @@ func (s *AuthServiceImpl) GenerateAccessToken(userId, email, username string) (s
 	return tokenString, nil
 }
 
-func (s *AuthServiceImpl) GenerateRefreshToken(userId string) (string, error) {
+func (s *AuthServiceImpl) GenerateRefreshToken(userId string, expiresAt time.Time) (string, error) {
 	token := jwt.NewWithClaims(
 		jwt.SigningMethodHS256, jwt.RegisteredClaims{
 			Issuer:    shared.ISSUER,
 			Subject:   userId,
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.config.RefreshTokenExpired)),
+			ExpiresAt: jwt.NewNumericDate(expiresAt),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			ID:        uuid.New().String(),
 		},
 	)
 

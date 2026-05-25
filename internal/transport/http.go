@@ -68,7 +68,7 @@ func NewHTTP(
 
 	wrappedMux := chain(
 		mux,
-		middleware.RecoveryMiddleware,
+		middleware.RecoveryMiddleware(cfg.GoEnv),
 		middleware.RequestIDMiddleware,
 		middleware.LoggingMiddleware,
 	)

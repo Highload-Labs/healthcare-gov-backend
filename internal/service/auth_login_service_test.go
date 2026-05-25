@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/config"
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/domain"
@@ -11,8 +12,37 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+type mockSessionRepo struct {
+	createFunc     func(userID, refreshToken string, expiresAt time.Time) error
+	revokeFunc     func(userID string) error
+	findByHashFunc func(hash string) (*domain.RefreshSession, error)
+}
+
+func (m *mockSessionRepo) Create(ctx context.Context, userID, refreshToken string, expiresAt time.Time) error {
+	return m.createFunc(userID, refreshToken, expiresAt)
+}
+
+func (m *mockSessionRepo) Revoke(ctx context.Context, userID string) error {
+	return m.revokeFunc(userID)
+}
+
+func (m *mockSessionRepo) FindByHash(ctx context.Context, hash string) (*domain.RefreshSession, error) {
+	return m.findByHashFunc(hash)
+}
+
 func TestLogin_LoginSuccess(t *testing.T) {
-	repo := &mockRepo{}
+	repo := &mockUserRepo{}
+	sessionRepo := &mockSessionRepo{
+		createFunc: func(userID, refreshToken string, expiresAt time.Time) error {
+			return nil
+		},
+		revokeFunc: func(userID string) error {
+			return nil
+		},
+		findByHashFunc: func(hash string) (*domain.RefreshSession, error) {
+			return &domain.RefreshSession{}, nil
+		},
+	}
 
 	cfg := &config.Config{
 		JwtAccessSigningKey:  []byte("test"),
@@ -34,8 +64,9 @@ func TestLogin_LoginSuccess(t *testing.T) {
 	}
 
 	svc := &AuthServiceImpl{
-		config:         cfg,
-		userRepository: repo,
+		config:                   cfg,
+		userRepository:           repo,
+		refreshSessionRepository: sessionRepo,
 	}
 
 	accessToken, refreshToken, err := svc.Login(
@@ -56,7 +87,7 @@ func TestLogin_LoginSuccess(t *testing.T) {
 }
 
 func TestLogin_LoginFailed(t *testing.T) {
-	repo := &mockRepo{}
+	repo := &mockUserRepo{}
 
 	cfg := &config.Config{
 		JwtAccessSigningKey:  []byte("test"),
@@ -92,7 +123,7 @@ func TestLogin_LoginFailed(t *testing.T) {
 }
 
 func TestLogin_UserNotFound(t *testing.T) {
-	repo := &mockRepo{}
+	repo := &mockUserRepo{}
 	repo.findByEmailFunc = func(email string) (*domain.User, error) {
 		return nil, repository.ErrUserNotFound
 	}
@@ -126,7 +157,7 @@ func BenchmarkLogin(b *testing.B) {
 
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(inputPassword), cfg.BcryptCost)
 
-	repo := &mockRepo{
+	repo := &mockUserRepo{
 		findByEmailFunc: func(email string) (*domain.User, error) {
 			return &domain.User{Email: email, Password: string(hashedPassword)}, nil
 		},

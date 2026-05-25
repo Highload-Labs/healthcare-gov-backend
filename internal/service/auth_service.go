@@ -15,9 +15,14 @@ type AuthService interface {
 type AuthServiceImpl struct {
 	config *config.Config
 
-	userRepository repository.UserRepository
+	userRepository           repository.UserRepository
+	refreshSessionRepository repository.RefreshSessionRepository
 }
 
-func NewAuthService(config *config.Config, userRepository repository.UserRepository) AuthService {
-	return &AuthServiceImpl{config: config, userRepository: userRepository}
+func NewAuthService(
+	config *config.Config,
+	userRepository repository.UserRepository,
+	sessionRepository repository.RefreshSessionRepository,
+) AuthService {
+	return &AuthServiceImpl{config: config, userRepository: userRepository, refreshSessionRepository: sessionRepository}
 }

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/handler/dto"
+	"github.com/Highload-Labs/healthcare-gov-backend/internal/repository"
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/shared"
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -69,8 +70,17 @@ func (h *Handler) AuthRefreshHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accessToken, refreshToken, err := h.authService.RefreshSession(r.Context(), claims.Subject)
+	accessToken, refreshToken, err := h.authService.RefreshSession(r.Context(), tokenString, claims.Subject)
 	if err != nil {
+		if errors.Is(err, repository.ErrSessionNotFound) || errors.Is(err, repository.ErrUserNotFound) {
+			shared.SendJSONError(
+				w,
+				shared.ErrorResponse{Success: false, Message: "Invalid or expired refresh token."},
+				http.StatusUnauthorized,
+			)
+			return
+		}
+
 		shared.SendJSONError(
 			w, shared.ErrorResponse{
 				Success: false,

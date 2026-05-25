@@ -13,8 +13,9 @@ func main() {
 
 	// userRepository := memory.NewUserRepository()
 	userRepository := repository.NewUserRepository(pg)
+	refreshSessionRepository := repository.NewRefreshTokenRepository(pg)
 
-	authService := service.NewAuthService(config.GetConfig(), userRepository)
+	authService := service.NewAuthService(config.GetConfig(), userRepository, refreshSessionRepository)
 
 	server := transport.NewHTTP(authService)
 	server.Serve()

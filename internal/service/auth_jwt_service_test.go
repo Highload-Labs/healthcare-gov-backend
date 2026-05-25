@@ -35,7 +35,7 @@ func TestAuthJwtService_GenerateRefreshToken(t *testing.T) {
 
 	service := &AuthServiceImpl{config: cfg}
 
-	token, err := service.GenerateRefreshToken("550e8400-e29b-41d4-a716-446655440000")
+	token, err := service.GenerateRefreshToken("550e8400-e29b-41d4-a716-446655440000", time.Now())
 	if err != nil {
 		t.Error(err)
 	}

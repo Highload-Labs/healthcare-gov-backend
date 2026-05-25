@@ -3,8 +3,10 @@ package service
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/repository"
+	"github.com/Highload-Labs/healthcare-gov-backend/internal/shared"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -46,7 +48,18 @@ func (s *AuthServiceImpl) Login(ctx context.Context, input LoginInput) (
 		return "", "", err
 	}
 
-	refreshToken, err = s.GenerateRefreshToken(user.ID)
+	expiresRefresh := time.Now().Add(s.config.RefreshTokenExpired)
+	refreshToken, err = s.GenerateRefreshToken(user.ID, expiresRefresh)
+	if err != nil {
+		return "", "", err
+	}
+
+	hashedRefreshToken, err := shared.Hash(refreshToken)
+	if err != nil {
+		return
+	}
+
+	err = s.refreshSessionRepository.Create(ctx, user.ID, hashedRefreshToken, expiresRefresh)
 	if err != nil {
 		return "", "", err
 	}
