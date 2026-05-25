@@ -26,6 +26,11 @@ func (r *userRepository) Create(ctx context.Context, user domain.User) (string, 
 	return user.Email, nil
 }
 
+func (r *userRepository) FindByID(ctx context.Context, id string) (*domain.User, error) {
+	// not implemented
+	return &domain.User{}, nil
+}
+
 func (r *userRepository) FindByEmail(ctx context.Context, email string) (*domain.User, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()

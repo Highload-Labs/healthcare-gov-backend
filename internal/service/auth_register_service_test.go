@@ -12,12 +12,18 @@ import (
 
 type mockRepo struct {
 	findByEmailFunc func(email string) (*domain.User, error)
+	findByIDFunc    func(userID string) (*domain.User, error)
 	createFunc      func(user domain.User) (string, error)
 }
 
 func (m *mockRepo) FindByEmail(ctx context.Context, e string) (*domain.User, error) {
 	return m.findByEmailFunc(e)
 }
+
+func (m *mockRepo) FindByID(ctx context.Context, id string) (*domain.User, error) {
+	return m.findByIDFunc(id)
+}
+
 func (m *mockRepo) Create(ctx context.Context, u domain.User) (string, error) {
 	return m.createFunc(u)
 }
