@@ -1,3 +1,8 @@
 package shared
 
 const ISSUER = "healthcare-gov"
+
+const INTERNAL_ERROR_CODE = "INTERNAL_ERROR"
+const UNAUTHORIZED_CODE = "UNAUTHORIZED"
+const BAD_REQUEST_CODE = "BAD_REQUEST"
+const CONFLICT_CODE = "CONFLICT"

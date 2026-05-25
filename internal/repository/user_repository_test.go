@@ -125,6 +125,73 @@ func TestUserRepository_FindByEmail_NotFound(t *testing.T) {
 	}
 }
 
+func TestUserRepository_FindByID_Success(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	pg := &infra.Postgresql{
+		Db: db,
+	}
+
+	repo := NewUserRepository(pg)
+	ctx := context.Background()
+
+	rows := sqlmock.NewRows([]string{"id", "email", "username", "password"}).AddRow(
+		"1",
+		"test@gmail.com",
+		"tester",
+		"hashed-password",
+	)
+
+	// Using QuoteMeta so the $1 placeholder doesn't conflict with regex engines
+	query := regexp.QuoteMeta("SELECT id, email, username, password FROM users WHERE id = $1")
+	mock.ExpectQuery(query).WithArgs("1").WillReturnRows(rows)
+
+	user, err := repo.FindByID(ctx, "1")
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when finding user", err)
+	}
+
+	if user.ID != "1" {
+		t.Errorf("expected ID 1 but got %s", user.ID)
+	}
+
+	if err = mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestUserRepository_FindByID_NotFound(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	pg := &infra.Postgresql{
+		Db: db,
+	}
+
+	repo := NewUserRepository(pg)
+	ctx := context.Background()
+
+	query := regexp.QuoteMeta("SELECT id, email, username, password FROM users WHERE id = $1")
+	mock.ExpectQuery(query).WithArgs("999").WillReturnError(sql.ErrNoRows)
+
+	_, err = repo.FindByID(ctx, "999")
+
+	if !errors.Is(err, ErrUserNotFound) {
+		t.Fatalf("expected ErrUserNotFound, got %v", err)
+	}
+
+	if err = mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func setupBenchmarkPostgres(b *testing.B) *infra.Postgresql {
 	cfg := &config.Config{
 		DatabaseHost:    "localhost",

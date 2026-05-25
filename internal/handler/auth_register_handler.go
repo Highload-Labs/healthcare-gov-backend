@@ -17,7 +17,7 @@ func (h *Handler) AuthRegisterPostHandler(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		shared.SendJSONError(
 			w,
-			dto.AuthRegisterResponse{Success: false, Code: "BAD_REQUEST", Message: "Missing required fields"},
+			shared.ErrorResponse{Success: false, Message: "Missing required fields"},
 			http.StatusBadRequest,
 		)
 		return
@@ -26,13 +26,13 @@ func (h *Handler) AuthRegisterPostHandler(w http.ResponseWriter, r *http.Request
 	if err = req.Validate(); err != nil {
 		shared.SendJSONError(
 			w,
-			dto.AuthRegisterResponse{Success: false, Code: "BAD_REQUEST", Message: "Missing required fields"},
+			shared.ErrorResponse{Success: false, Message: "Missing required fields"},
 			http.StatusBadRequest,
 		)
 		return
 	}
 
-	userID, err := h.authRegisterSvc.Register(
+	userID, err := h.authService.Register(
 		r.Context(), service.RegisterInput{
 			Email:    req.Email,
 			Username: req.Username,
@@ -44,9 +44,8 @@ func (h *Handler) AuthRegisterPostHandler(w http.ResponseWriter, r *http.Request
 		if errors.Is(err, service.ErrEmailAlreadyUsed) {
 			shared.SendJSONError(
 				w,
-				dto.AuthRegisterResponse{
+				shared.ErrorResponse{
 					Success: false,
-					Code:    "CONFLICT",
 					Message: "This email address is already registered.",
 				},
 				http.StatusBadRequest,
@@ -56,7 +55,7 @@ func (h *Handler) AuthRegisterPostHandler(w http.ResponseWriter, r *http.Request
 
 		shared.SendJSONError(
 			w,
-			dto.AuthRegisterResponse{
+			shared.ErrorResponse{
 				Success: false,
 				Code:    "INTERNAL_ERROR",
 				Message: "Internal Server Error.",
@@ -81,7 +80,7 @@ func (h *Handler) AuthRegisterPostHandler(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		shared.SendJSONError(
 			w,
-			dto.AuthRegisterResponse{
+			shared.ErrorResponse{
 				Success: false,
 				Code:    "INTERNAL_ERROR",
 				Message: "Internal Server Error.",

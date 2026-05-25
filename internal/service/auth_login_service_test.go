@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/config"
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/domain"
@@ -11,32 +12,43 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type mockAuthJwtService struct {
-	generateAccessTokenFunc  func(userId, email, username string) (string, error)
-	generateRefreshTokenFunc func(userId string) (string, error)
+type mockSessionRepo struct {
+	createFunc     func(userID, refreshToken string, expiresAt time.Time) error
+	revokeFunc     func(userID string) error
+	findByHashFunc func(hash string) (*domain.RefreshSession, error)
 }
 
-func (m *mockAuthJwtService) GenerateAccessToken(userId, email, username string) (string, error) {
-	return m.generateAccessTokenFunc(userId, email, username)
+func (m *mockSessionRepo) Create(ctx context.Context, userID, refreshToken string, expiresAt time.Time) error {
+	return m.createFunc(userID, refreshToken, expiresAt)
 }
 
-func (m *mockAuthJwtService) GenerateRefreshToken(userId string) (string, error) {
-	return m.generateRefreshTokenFunc(userId)
+func (m *mockSessionRepo) Revoke(ctx context.Context, userID string) error {
+	return m.revokeFunc(userID)
+}
+
+func (m *mockSessionRepo) FindByHash(ctx context.Context, hash string) (*domain.RefreshSession, error) {
+	return m.findByHashFunc(hash)
 }
 
 func TestLogin_LoginSuccess(t *testing.T) {
-	repo := &mockRepo{}
-	jwtService := &mockAuthJwtService{
-		generateAccessTokenFunc: func(userId, email, username string) (string, error) {
-			return "accessToken", nil
+	repo := &mockUserRepo{}
+	sessionRepo := &mockSessionRepo{
+		createFunc: func(userID, refreshToken string, expiresAt time.Time) error {
+			return nil
 		},
-		generateRefreshTokenFunc: func(userId string) (string, error) {
-			return "refreshToken", nil
+		revokeFunc: func(userID string) error {
+			return nil
+		},
+		findByHashFunc: func(hash string) (*domain.RefreshSession, error) {
+			return &domain.RefreshSession{}, nil
 		},
 	}
 
 	cfg := &config.Config{
-		BcryptCost: 4,
+		JwtAccessSigningKey:  []byte("test"),
+		JwtRefreshSigningKey: []byte("test"),
+		AccessTokenExpired:   3600,
+		BcryptCost:           4,
 	}
 
 	inputEmail := "test@gmail.com"
@@ -51,7 +63,11 @@ func TestLogin_LoginSuccess(t *testing.T) {
 		return &domain.User{Email: email, Password: string(hashedPassword)}, nil
 	}
 
-	svc := NewAuthLoginService(repo, jwtService)
+	svc := &AuthServiceImpl{
+		config:                   cfg,
+		userRepository:           repo,
+		refreshSessionRepository: sessionRepo,
+	}
 
 	accessToken, refreshToken, err := svc.Login(
 		context.Background(),
@@ -61,28 +77,23 @@ func TestLogin_LoginSuccess(t *testing.T) {
 		t.Errorf("expected err to be nil, got %v", err)
 	}
 
-	if accessToken != "accessToken" {
-		t.Errorf("expected accessToken to be 'accessToken', got %s", accessToken)
+	if accessToken == "" {
+		t.Errorf("expected accessToken to not null, got %s", accessToken)
 	}
 
-	if refreshToken != "refreshToken" {
-		t.Errorf("expected refreshToken to be 'refreshToken', got %s", refreshToken)
+	if refreshToken == "" {
+		t.Errorf("expected refreshToken to not null, got %s", refreshToken)
 	}
 }
 
 func TestLogin_LoginFailed(t *testing.T) {
-	repo := &mockRepo{}
-	jwtService := &mockAuthJwtService{
-		generateAccessTokenFunc: func(userId, email, username string) (string, error) {
-			return "accessToken", nil
-		},
-		generateRefreshTokenFunc: func(userId string) (string, error) {
-			return "refreshToken", nil
-		},
-	}
+	repo := &mockUserRepo{}
 
 	cfg := &config.Config{
-		BcryptCost: 4,
+		JwtAccessSigningKey:  []byte("test"),
+		JwtRefreshSigningKey: []byte("test"),
+		AccessTokenExpired:   3600,
+		BcryptCost:           4,
 	}
 
 	inputEmail := "test@gmail.com"
@@ -97,7 +108,10 @@ func TestLogin_LoginFailed(t *testing.T) {
 		return &domain.User{Email: email, Password: string(hashedPassword)}, nil
 	}
 
-	svc := NewAuthLoginService(repo, jwtService)
+	svc := &AuthServiceImpl{
+		config:         cfg,
+		userRepository: repo,
+	}
 
 	_, _, err = svc.Login(
 		context.Background(),
@@ -109,21 +123,14 @@ func TestLogin_LoginFailed(t *testing.T) {
 }
 
 func TestLogin_UserNotFound(t *testing.T) {
-	repo := &mockRepo{}
-	jwtService := &mockAuthJwtService{
-		generateAccessTokenFunc: func(userId, email, username string) (string, error) {
-			return "accessToken", nil
-		},
-		generateRefreshTokenFunc: func(userId string) (string, error) {
-			return "refreshToken", nil
-		},
-	}
-
+	repo := &mockUserRepo{}
 	repo.findByEmailFunc = func(email string) (*domain.User, error) {
 		return nil, repository.ErrUserNotFound
 	}
 
-	svc := NewAuthLoginService(repo, jwtService)
+	svc := &AuthServiceImpl{
+		userRepository: repo,
+	}
 
 	_, _, err := svc.Login(
 		context.Background(), LoginInput{
@@ -141,28 +148,26 @@ func BenchmarkLogin(b *testing.B) {
 	inputEmail := "test@gmail.com"
 	inputPassword := "test123456"
 
-	jwtService := &mockAuthJwtService{
-		generateAccessTokenFunc: func(userId, email, username string) (string, error) {
-			return "accessToken", nil
-		},
-		generateRefreshTokenFunc: func(userId string) (string, error) {
-			return "refreshToken", nil
-		},
-	}
-
 	cfg := &config.Config{
-		BcryptCost: 4,
+		JwtAccessSigningKey:  []byte("test"),
+		JwtRefreshSigningKey: []byte("test"),
+		AccessTokenExpired:   3600,
+		BcryptCost:           4,
 	}
 
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(inputPassword), cfg.BcryptCost)
 
-	repo := &mockRepo{
+	repo := &mockUserRepo{
 		findByEmailFunc: func(email string) (*domain.User, error) {
 			return &domain.User{Email: email, Password: string(hashedPassword)}, nil
 		},
 	}
 
-	svc := NewAuthLoginService(repo, jwtService)
+	svc := &AuthServiceImpl{
+		config:         cfg,
+		userRepository: repo,
+	}
+
 	input := LoginInput{Email: inputEmail, Password: inputPassword}
 
 	for b.Loop() {

@@ -10,20 +10,26 @@ import (
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/repository"
 )
 
-type mockRepo struct {
+type mockUserRepo struct {
 	findByEmailFunc func(email string) (*domain.User, error)
+	findByIDFunc    func(userID string) (*domain.User, error)
 	createFunc      func(user domain.User) (string, error)
 }
 
-func (m *mockRepo) FindByEmail(ctx context.Context, e string) (*domain.User, error) {
+func (m *mockUserRepo) FindByEmail(ctx context.Context, e string) (*domain.User, error) {
 	return m.findByEmailFunc(e)
 }
-func (m *mockRepo) Create(ctx context.Context, u domain.User) (string, error) {
+
+func (m *mockUserRepo) FindByID(ctx context.Context, id string) (*domain.User, error) {
+	return m.findByIDFunc(id)
+}
+
+func (m *mockUserRepo) Create(ctx context.Context, u domain.User) (string, error) {
 	return m.createFunc(u)
 }
 
 func TestRegister_EmailAlreadyExists(t *testing.T) {
-	repo := &mockRepo{
+	repo := &mockUserRepo{
 		findByEmailFunc: func(email string) (*domain.User, error) {
 			return &domain.User{Email: email}, nil // User found
 		},
@@ -33,7 +39,10 @@ func TestRegister_EmailAlreadyExists(t *testing.T) {
 		BcryptCost: 4,
 	}
 
-	svc := NewAuthRegisterService(cfg, repo)
+	svc := &AuthServiceImpl{
+		config:         cfg,
+		userRepository: repo,
+	}
 
 	userID, err := svc.Register(context.Background(), RegisterInput{Email: "test@test.com"})
 	if !errors.Is(err, ErrEmailAlreadyUsed) {
@@ -46,7 +55,7 @@ func TestRegister_EmailAlreadyExists(t *testing.T) {
 }
 
 func BenchmarkRegister(b *testing.B) {
-	repo := &mockRepo{
+	repo := &mockUserRepo{
 		findByEmailFunc: func(e string) (*domain.User, error) { return nil, repository.ErrUserNotFound },
 		createFunc:      func(u domain.User) (string, error) { return "", nil },
 	}
@@ -55,7 +64,11 @@ func BenchmarkRegister(b *testing.B) {
 		BcryptCost: 4,
 	}
 
-	svc := NewAuthRegisterService(cfg, repo)
+	svc := &AuthServiceImpl{
+		config:         cfg,
+		userRepository: repo,
+	}
+
 	input := RegisterInput{Email: "a@b.com", Username: "user", Password: "password123"}
 
 	for b.Loop() {

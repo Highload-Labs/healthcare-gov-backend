@@ -7,7 +7,9 @@ import (
 )
 
 func TestRecoveryMiddleware(t *testing.T) {
-	handler := RecoveryMiddleware(
+	m := RecoveryMiddleware("development")
+
+	handler := m(
 		http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {
 				panic("intended panic")

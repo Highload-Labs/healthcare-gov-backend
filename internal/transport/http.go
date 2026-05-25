@@ -52,7 +52,9 @@ func setupPprof() {
 	}()
 }
 
-func NewHTTP(authRegisterSvc service.AuthRegisterService, authLoginSvc service.AuthLoginService) *HTTP {
+func NewHTTP(
+	authService service.AuthService,
+) *HTTP {
 	mux := http.NewServeMux()
 
 	cfg := config.GetConfig()
@@ -61,12 +63,12 @@ func NewHTTP(authRegisterSvc service.AuthRegisterService, authLoginSvc service.A
 		setupPprof()
 	}
 
-	h := handler.NewHandler(mux, cfg, authRegisterSvc, authLoginSvc)
+	h := handler.NewHandler(mux, cfg, authService)
 	h.InitializeRoutes()
 
 	wrappedMux := chain(
 		mux,
-		middleware.RecoveryMiddleware,
+		middleware.RecoveryMiddleware(cfg.GoEnv),
 		middleware.RequestIDMiddleware,
 		middleware.LoggingMiddleware,
 	)

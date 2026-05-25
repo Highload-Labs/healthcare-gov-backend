@@ -1,25 +1,21 @@
 package service
 
 import (
+	"errors"
 	"time"
 
-	"github.com/Highload-Labs/healthcare-gov-backend/internal/config"
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/shared"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
 
 type AuthJwtService interface {
 	GenerateAccessToken(userId, email, username string) (string, error)
-	GenerateRefreshToken(userId string) (string, error)
+	GenerateRefreshToken(userId string, expiresAt time.Time) (string, error)
+	VerifyRefreshToken(tokenString string) (*jwt.RegisteredClaims, error)
 }
 
-type AuthJwtServiceImpl struct {
-	config *config.Config
-}
-
-func NewAuthJwtService(config *config.Config) AuthJwtService {
-	return &AuthJwtServiceImpl{config: config}
-}
+var ErrInvalidToken = errors.New("invalid token")
 
 type Claims struct {
 	Email    string `json:"email,omitempty"`
@@ -27,7 +23,7 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-func (s *AuthJwtServiceImpl) GenerateAccessToken(userId, email, username string) (string, error) {
+func (s *AuthServiceImpl) GenerateAccessToken(userId, email, username string) (string, error) {
 	claims := Claims{
 		Email:    email,
 		Username: username,
@@ -36,6 +32,7 @@ func (s *AuthJwtServiceImpl) GenerateAccessToken(userId, email, username string)
 			Subject:   userId,
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.config.AccessTokenExpired)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			ID:        uuid.New().String(),
 		},
 	}
 
@@ -48,13 +45,14 @@ func (s *AuthJwtServiceImpl) GenerateAccessToken(userId, email, username string)
 	return tokenString, nil
 }
 
-func (s *AuthJwtServiceImpl) GenerateRefreshToken(userId string) (string, error) {
+func (s *AuthServiceImpl) GenerateRefreshToken(userId string, expiresAt time.Time) (string, error) {
 	token := jwt.NewWithClaims(
 		jwt.SigningMethodHS256, jwt.RegisteredClaims{
 			Issuer:    shared.ISSUER,
 			Subject:   userId,
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.config.RefreshTokenExpired)),
+			ExpiresAt: jwt.NewNumericDate(expiresAt),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			ID:        uuid.New().String(),
 		},
 	)
 
@@ -64,4 +62,22 @@ func (s *AuthJwtServiceImpl) GenerateRefreshToken(userId string) (string, error)
 	}
 
 	return tokenString, nil
+}
+
+func (s *AuthServiceImpl) VerifyRefreshToken(tokenString string) (*jwt.RegisteredClaims, error) {
+	token, err := jwt.ParseWithClaims(
+		tokenString, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
+			return s.config.JwtRefreshSigningKey, nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if claims, ok := token.Claims.(*jwt.RegisteredClaims); ok && token.Valid {
+		return claims, nil
+	}
+
+	return nil, ErrInvalidToken
 }

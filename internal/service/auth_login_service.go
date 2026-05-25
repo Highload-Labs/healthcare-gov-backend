@@ -3,25 +3,15 @@ package service
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/repository"
+	"github.com/Highload-Labs/healthcare-gov-backend/internal/shared"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type AuthLoginService interface {
 	Login(ctx context.Context, input LoginInput) (accessToken string, refreshToken string, err error)
-}
-
-type AuthLoginServiceImpl struct {
-	userRepository repository.UserRepository
-	jwtService     AuthJwtService
-}
-
-func NewAuthLoginService(userRepo repository.UserRepository, jwtService AuthJwtService) AuthLoginService {
-	return &AuthLoginServiceImpl{
-		userRepository: userRepo,
-		jwtService:     jwtService,
-	}
 }
 
 type LoginInput struct {
@@ -31,7 +21,7 @@ type LoginInput struct {
 
 var ErrInvalidCredentials = errors.New("invalid credentials")
 
-func (s *AuthLoginServiceImpl) Login(ctx context.Context, input LoginInput) (
+func (s *AuthServiceImpl) Login(ctx context.Context, input LoginInput) (
 	accessToken string,
 	refreshToken string,
 	err error,
@@ -53,12 +43,23 @@ func (s *AuthLoginServiceImpl) Login(ctx context.Context, input LoginInput) (
 		return "", "", err
 	}
 
-	accessToken, err = s.jwtService.GenerateAccessToken(user.ID, user.Email, user.Username)
+	accessToken, err = s.GenerateAccessToken(user.ID, user.Email, user.Username)
 	if err != nil {
 		return "", "", err
 	}
 
-	refreshToken, err = s.jwtService.GenerateRefreshToken(user.ID)
+	expiresRefresh := time.Now().Add(s.config.RefreshTokenExpired)
+	refreshToken, err = s.GenerateRefreshToken(user.ID, expiresRefresh)
+	if err != nil {
+		return "", "", err
+	}
+
+	hashedRefreshToken, err := shared.Hash(refreshToken)
+	if err != nil {
+		return
+	}
+
+	err = s.refreshSessionRepository.Create(ctx, user.ID, hashedRefreshToken, expiresRefresh)
 	if err != nil {
 		return "", "", err
 	}

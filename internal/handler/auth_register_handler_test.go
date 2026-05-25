@@ -12,19 +12,26 @@ import (
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/service"
 )
 
-type mockAuthRegisterService struct {
+type mockAuthService struct {
+	service.AuthService
 	registerFunc func(input service.RegisterInput) (string, error)
 }
 
-func (m *mockAuthRegisterService) Register(
+func (m *mockAuthService) Register(
 	ctx context.Context,
 	input service.RegisterInput,
 ) (string, error) {
 	return m.registerFunc(input)
 }
 
+var mockService = &mockAuthService{
+	registerFunc: func(input service.RegisterInput) (string, error) {
+		return "", nil
+	},
+}
+
 func TestAuthRegisterPostHandler_ValidationFailure(t *testing.T) {
-	h := NewHandler(nil, nil, nil, nil)
+	h := &Handler{}
 
 	// Missing Email
 	body, _ := json.Marshal(dto.AuthRegisterRequest{Password: "pass1234"})
@@ -55,7 +62,7 @@ func BenchmarkAuthRegister_ValidationFailure(b *testing.B) {
 }
 
 func BenchmarkAuthRegisterPostHandler_ValidationFailure(b *testing.B) {
-	h := NewHandler(nil, nil, nil, nil)
+	h := &Handler{}
 
 	body, _ := json.Marshal(dto.AuthRegisterRequest{Password: "pass1234"})
 	req := httptest.NewRequest(http.MethodPost, "/auth/register", bytes.NewBuffer(body))
@@ -68,13 +75,9 @@ func BenchmarkAuthRegisterPostHandler_ValidationFailure(b *testing.B) {
 }
 
 func BenchmarkAuthRegisterPostHandler_Success(b *testing.B) {
-	svc := &mockAuthRegisterService{
-		registerFunc: func(input service.RegisterInput) (string, error) {
-			return "", nil
-		},
+	h := &Handler{
+		authService: mockService,
 	}
-
-	h := NewHandler(nil, nil, svc, nil)
 
 	body, _ := json.Marshal(
 		dto.AuthRegisterRequest{
