@@ -1,0 +1,75 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: healthcare-postgres
+    environment:
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASS}
+      POSTGRES_DB: ${DATABASE_NAME}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER} -d ${DATABASE_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  db-migration:
+    image: migrate/migrate
+    container_name: healthcare-migration
+    volumes:
+      - ./migrations:/migrations:ro
+    networks:
+      - app-network
+    command:
+      - -path=/migrations
+      - -database=postgres://${DATABASE_USER}:${DATABASE_PASS}@postgres:5432/${DATABASE_NAME}?sslmode=disable
+      - up
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: healthcare-backend
+    ports:
+      - "${SERVER_PORT}:8080"
+    environment:
+      - SERVER_PORT=${SERVER_PORT}
+      - GO_ENV=${GO_ENV}
+      - BCRYPT_COST=${BCRYPT_COST}
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=5432
+      - DATABASE_USER=${DATABASE_USER}
+      - DATABASE_PASS=${DATABASE_PASS}
+      - DATABASE_NAME=${DATABASE_NAME}
+      - DATABASE_SSLMODE=${DATABASE_SSLMODE}
+      - JWT_ACCESS_SIGNING_KEY=${JWT_ACCESS_SIGNING_KEY}
+      - JWT_REFRESH_SIGNING_KEY=${JWT_REFRESH_SIGNING_KEY}
+      - ACCESS_TOKEN_EXPIRED=${ACCESS_TOKEN_EXPIRED}
+      - REFRESH_TOKEN_EXPIRED=${REFRESH_TOKEN_EXPIRED}
+    networks:
+      - app-network
+    depends_on:
+      db-migration:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+    driver: local
+
+networks:
+  app-network:
+    driver: bridge
