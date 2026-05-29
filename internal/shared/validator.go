@@ -20,3 +20,16 @@ func CheckAlphanumeric(str string) bool {
 
 	return false
 }
+
+func CheckNumericOnly(str string) bool {
+	for _, letter := range str {
+		switch {
+		case unicode.IsNumber(letter):
+			continue
+		default:
+			return false
+		}
+	}
+
+	return true
+}
