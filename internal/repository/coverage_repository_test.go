@@ -24,7 +24,7 @@ func TestCoverageRepository_FindByZipcode(t *testing.T) {
 
 	rows := sqlmock.NewRows([]string{"id", "state", "zipcode_start", "zipcode_end"}).AddRow("test", "test", "1", "1")
 
-	query := regexp.QuoteMeta(`SELECT id, state, zipcode_start, zipcode_end FROM coverage WHERE $1 BETWEEN zipcode_start AND zipcode_end LIMIT 1`)
+	query := regexp.QuoteMeta(`SELECT id, state, zipcode_start, zipcode_end FROM coverages WHERE $1 BETWEEN zipcode_start AND zipcode_end LIMIT 1`)
 	mock.ExpectQuery(query).WithArgs(sqlmock.AnyArg()).WillReturnRows(rows)
 
 	coverage, err := repo.FindByZipcode(context.Background(), "1")
