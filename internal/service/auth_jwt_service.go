@@ -13,6 +13,7 @@ type AuthJwtService interface {
 	GenerateAccessToken(userId, email, username string) (string, error)
 	GenerateRefreshToken(userId string, expiresAt time.Time) (string, error)
 	VerifyRefreshToken(tokenString string) (*jwt.RegisteredClaims, error)
+	VerifyAccessToken(tokenString string) (*Claims, error)
 }
 
 var ErrInvalidToken = errors.New("invalid token")
@@ -43,6 +44,24 @@ func (s *AuthServiceImpl) GenerateAccessToken(userId, email, username string) (s
 	}
 
 	return tokenString, nil
+}
+
+func (s *AuthServiceImpl) VerifyAccessToken(tokenString string) (*Claims, error) {
+	token, err := jwt.ParseWithClaims(
+		tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+			return s.config.JwtAccessSigningKey, nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
+		return claims, nil
+	}
+
+	return nil, ErrInvalidToken
 }
 
 func (s *AuthServiceImpl) GenerateRefreshToken(userId string, expiresAt time.Time) (string, error) {
