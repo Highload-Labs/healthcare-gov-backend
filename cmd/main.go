@@ -13,10 +13,13 @@ func main() {
 
 	// userRepository := memory.NewUserRepository()
 	userRepository := repository.NewUserRepository(pg)
+	coverageRepository := repository.NewCoverageRepository(pg)
+
 	refreshSessionRepository := repository.NewRefreshTokenRepository(pg)
 
 	authService := service.NewAuthService(config.GetConfig(), userRepository, refreshSessionRepository)
+	coverageService := service.NewCoverageService(coverageRepository)
 
-	server := transport.NewHTTP(authService)
+	server := transport.NewHTTP(authService, coverageService)
 	server.Serve()
 }

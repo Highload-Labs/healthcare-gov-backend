@@ -4,5 +4,5 @@ CREATE TABLE IF NOT EXISTS refresh_sessions (
     token_hash TEXT NOT NULL UNIQUE,
     expires_at TIMESTAMP NOT NULL,
     revoked_at TIMESTAMP NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 )

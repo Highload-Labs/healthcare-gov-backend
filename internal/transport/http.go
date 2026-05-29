@@ -54,6 +54,7 @@ func setupPprof() {
 
 func NewHTTP(
 	authService service.AuthService,
+	coverageService service.CoverageService,
 ) *HTTP {
 	mux := http.NewServeMux()
 
@@ -63,7 +64,7 @@ func NewHTTP(
 		setupPprof()
 	}
 
-	h := handler.NewHandler(mux, cfg, authService)
+	h := handler.NewHandler(mux, cfg, authService, coverageService)
 	h.InitializeRoutes()
 
 	wrappedMux := chain(

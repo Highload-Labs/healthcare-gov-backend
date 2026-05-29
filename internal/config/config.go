@@ -35,11 +35,7 @@ var once sync.Once
 func GetConfig() *Config {
 	once.Do(
 		func() {
-			err := godotenv.Load()
-			if err != nil {
-				slog.Error(err.Error())
-				os.Exit(1)
-			}
+			_ = godotenv.Load()
 
 			serverPort := os.Getenv("SERVER_PORT")
 			if serverPort == "" {
