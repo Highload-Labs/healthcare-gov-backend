@@ -10,7 +10,8 @@ import (
 )
 
 type PlanRepository interface {
-	FindByState(ctx context.Context, state string) ([]domain.Plan, error)
+	CountByState(ctx context.Context, state string) (int64, error)
+	FindByState(ctx context.Context, state string, limit int, offset int) ([]domain.Plan, error)
 	FindById(ctx context.Context, id string) (*domain.Plan, error)
 }
 
@@ -24,13 +25,34 @@ func NewPlanRepository(postgres *infra.Postgresql) PlanRepository {
 	return &PlanRepositoryImpl{postgres: postgres}
 }
 
-func (r *PlanRepositoryImpl) FindByState(ctx context.Context, state string) ([]domain.Plan, error) {
+func (r *PlanRepositoryImpl) CountByState(ctx context.Context, state string) (int64, error) {
+	var count int64
+
+	err := r.postgres.Db.QueryRowContext(
+		ctx,
+		"SELECT COUNT(*) as total_data FROM plans WHERE state = $1",
+		state,
+	).Scan(&count)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (r *PlanRepositoryImpl) FindByState(ctx context.Context, state string, limit int, offset int) (
+	[]domain.Plan,
+	error,
+) {
 	var plans []domain.Plan
 
 	rows, err := r.postgres.Db.QueryContext(
 		ctx,
-		"SELECT id, name, provider, tier, monthly_premium, deductible, out_of_pocket_max, state, created_at, updated_at FROM plans WHERE state = $1",
+		"SELECT id, name, provider, tier, monthly_premium, deductible, out_of_pocket_max, state, created_at, updated_at FROM plans WHERE state = $1 ORDER BY id ASC LIMIT $2 OFFSET $3",
 		state,
+		limit,
+		offset,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

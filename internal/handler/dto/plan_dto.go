@@ -16,8 +16,9 @@ type PlanIdRequest struct {
 }
 
 type PlansResponse struct {
-	Success bool `json:"success"`
-	Data    any  `json:"data"`
+	Success  bool             `json:"success"`
+	Data     any              `json:"data"`
+	Metadata *shared.Metadata `json:"metadata,omitempty"`
 }
 
 type PlanResponseData struct {

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/handler/dto"
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/service"
@@ -12,6 +13,8 @@ import (
 
 func (h *Handler) PlansGetByZipcode(w http.ResponseWriter, r *http.Request) {
 	zipcode := r.URL.Query().Get("zipcode")
+	page := r.URL.Query().Get("page")
+	limit := r.URL.Query().Get("limit")
 
 	var req dto.PlansZipcodeRequest
 	req.Zipcode = zipcode
@@ -22,7 +25,16 @@ func (h *Handler) PlansGetByZipcode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	plans, err := h.planService.GetByZipcode(r.Context(), zipcode)
+	pageInt, _ := strconv.Atoi(page)
+	limitInt, _ := strconv.Atoi(limit)
+
+	var pagination = &shared.Pagination{
+		Limit:      limitInt,
+		PageNumber: pageInt,
+	}
+
+	pagination.SettleValue()
+	plans, metadata, err := h.planService.GetByZipcode(r.Context(), zipcode, pagination)
 	if err != nil {
 		if errors.Is(err, service.ErrPlanNotFound) || errors.Is(err, service.ErrCoverageNotFound) {
 			shared.SendJSONError(
@@ -41,8 +53,9 @@ func (h *Handler) PlansGetByZipcode(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(
 		dto.PlansResponse{
-			Success: true,
-			Data:    plans,
+			Success:  true,
+			Data:     plans,
+			Metadata: metadata,
 		},
 	)
 }

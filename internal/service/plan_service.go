@@ -6,10 +6,15 @@ import (
 
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/domain"
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/repository"
+	"github.com/Highload-Labs/healthcare-gov-backend/internal/shared"
 )
 
 type PlanService interface {
-	GetByZipcode(ctx context.Context, zipcode string) ([]domain.Plan, error)
+	GetByZipcode(ctx context.Context, zipcode string, pagination *shared.Pagination) (
+		[]domain.Plan,
+		*shared.Metadata,
+		error,
+	)
 	GetById(ctx context.Context, id string) (*domain.Plan, error)
 }
 
@@ -28,27 +33,46 @@ func NewPlanService(repo repository.PlanRepository, coverageService CoverageServ
 	}
 }
 
-func (s *PlanServiceImpl) GetByZipcode(ctx context.Context, zipcode string) ([]domain.Plan, error) {
+func (s *PlanServiceImpl) GetByZipcode(
+	ctx context.Context,
+	zipcode string,
+	pagination *shared.Pagination,
+) ([]domain.Plan, *shared.Metadata, error) {
 	coverage, err := s.coverageService.GetCoverageByZipcode(ctx, zipcode)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
+	}
+
+	offset := pagination.CalculateOffset()
+	metadata := &shared.Metadata{
+		CurrentPage: pagination.PageNumber,
+		Limit:       pagination.Limit,
 	}
 
 	state := coverage.State
-	plans, err := s.repo.FindByState(ctx, state)
+	totalData, err := s.repo.CountByState(ctx, state)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if totalData == 0 {
+		return nil, nil, ErrPlanNotFound
+	}
+
+	plans, err := s.repo.FindByState(ctx, state, pagination.Limit, offset)
 	if err != nil {
 		if errors.Is(err, repository.ErrPlanNotFound) {
-			return nil, ErrPlanNotFound
+			return nil, nil, ErrPlanNotFound
 		}
 
-		return nil, err
+		return nil, nil, err
 	}
 
-	if len(plans) == 0 {
-		return nil, ErrPlanNotFound
-	}
+	totalPages := pagination.CalculateTotalPages(totalData)
+	metadata.TotalData = totalData
+	metadata.TotalPages = totalPages
 
-	return plans, nil
+	return plans, metadata, nil
 }
 
 func (s *PlanServiceImpl) GetById(ctx context.Context, id string) (*domain.Plan, error) {

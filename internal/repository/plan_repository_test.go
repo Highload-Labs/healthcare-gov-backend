@@ -10,6 +10,39 @@ import (
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/infra"
 )
 
+func TestPlanRepository_CountByState(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	query := regexp.QuoteMeta("SELECT COUNT(*) as total_data FROM plans WHERE state = $1")
+
+	mock.ExpectQuery(query).WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
+
+	pg := &infra.Postgresql{
+		Db: db,
+	}
+
+	repo := &PlanRepositoryImpl{
+		postgres: pg,
+	}
+
+	count, err := repo.CountByState(context.Background(), "state")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if count != 1 {
+		t.Errorf("want 1, got %d", count)
+	}
+
+	if err = mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+}
+
 func TestPlanRepository_FindByState(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
@@ -17,7 +50,7 @@ func TestPlanRepository_FindByState(t *testing.T) {
 	}
 	defer db.Close()
 
-	query := regexp.QuoteMeta("SELECT id, name, provider, tier, monthly_premium, deductible, out_of_pocket_max, state, created_at, updated_at FROM plans WHERE state = $1")
+	query := regexp.QuoteMeta("SELECT id, name, provider, tier, monthly_premium, deductible, out_of_pocket_max, state, created_at, updated_at FROM plans WHERE state = $1 ORDER BY id ASC LIMIT $2 OFFSET $3")
 
 	now := time.Now()
 
@@ -36,7 +69,7 @@ func TestPlanRepository_FindByState(t *testing.T) {
 		},
 	).AddRow("1", "test", "test", "bronze", 50.00, 50.00, 50.00, "test", now, now)
 
-	mock.ExpectQuery(query).WithArgs(sqlmock.AnyArg()).WillReturnRows(rows)
+	mock.ExpectQuery(query).WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).WillReturnRows(rows)
 
 	pg := &infra.Postgresql{
 		Db: db,
@@ -46,7 +79,7 @@ func TestPlanRepository_FindByState(t *testing.T) {
 		postgres: pg,
 	}
 
-	plans, err := repo.FindByState(context.Background(), "test")
+	plans, err := repo.FindByState(context.Background(), "test", 1, 0)
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when finding plans by state", err)
 	}
