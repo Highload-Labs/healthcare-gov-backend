@@ -25,7 +25,11 @@ func (h *Handler) PlansGetByZipcode(w http.ResponseWriter, r *http.Request) {
 	plans, err := h.planService.GetByZipcode(r.Context(), zipcode)
 	if err != nil {
 		if errors.Is(err, service.ErrPlanNotFound) || errors.Is(err, service.ErrCoverageNotFound) {
-			shared.SendJSONError(w, shared.ErrorResponse{Message: "No plans available for this zipcode."}, http.StatusNotFound)
+			shared.SendJSONError(
+				w,
+				shared.ErrorResponse{Message: "No plans available for this zipcode."},
+				http.StatusNotFound,
+			)
 			return
 		}
 
@@ -35,10 +39,12 @@ func (h *Handler) PlansGetByZipcode(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(dto.PlansResponse{
-		Success: true,
-		Data:    plans,
-	})
+	_ = json.NewEncoder(w).Encode(
+		dto.PlansResponse{
+			Success: true,
+			Data:    plans,
+		},
+	)
 }
 
 func (h *Handler) PlanGetById(w http.ResponseWriter, r *http.Request) {
@@ -66,8 +72,10 @@ func (h *Handler) PlanGetById(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(&dto.PlansResponse{
-		Success: true,
-		Data:    plan,
-	})
+	_ = json.NewEncoder(w).Encode(
+		&dto.PlansResponse{
+			Success: true,
+			Data:    plan,
+		},
+	)
 }

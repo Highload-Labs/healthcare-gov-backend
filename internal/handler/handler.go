@@ -45,6 +45,12 @@ func (h *Handler) InitializeRoutes() {
 
 	h.mux.HandleFunc("GET /coverage/{zipcode}", h.CoverageGetByZipcodeHandler)
 
-	h.mux.HandleFunc("GET /plans", h.authorizationMiddleware.Authorization(http.HandlerFunc(h.PlansGetByZipcode)).ServeHTTP)
-	h.mux.HandleFunc("GET /plans/{id}", h.authorizationMiddleware.Authorization(http.HandlerFunc(h.PlanGetById)).ServeHTTP)
+	h.mux.HandleFunc(
+		"GET /plans",
+		h.authorizationMiddleware.Authorization(http.HandlerFunc(h.PlansGetByZipcode)).ServeHTTP,
+	)
+	h.mux.HandleFunc(
+		"GET /plans/{id}",
+		h.authorizationMiddleware.Authorization(http.HandlerFunc(h.PlanGetById)).ServeHTTP,
+	)
 }

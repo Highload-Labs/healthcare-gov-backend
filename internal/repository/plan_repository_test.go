@@ -21,7 +21,20 @@ func TestPlanRepository_FindByState(t *testing.T) {
 
 	now := time.Now()
 
-	rows := sqlmock.NewRows([]string{"id", "name", "provider", "tier", "monthly_premium", "deductible", "out_of_pocket_max", "state", "created_at", "updated_at"}).AddRow("1", "test", "test", "bronze", 50.00, 50.00, 50.00, "test", now, now)
+	rows := sqlmock.NewRows(
+		[]string{
+			"id",
+			"name",
+			"provider",
+			"tier",
+			"monthly_premium",
+			"deductible",
+			"out_of_pocket_max",
+			"state",
+			"created_at",
+			"updated_at",
+		},
+	).AddRow("1", "test", "test", "bronze", 50.00, 50.00, 50.00, "test", now, now)
 
 	mock.ExpectQuery(query).WithArgs(sqlmock.AnyArg()).WillReturnRows(rows)
 
@@ -57,7 +70,20 @@ func TestPlanRepository_FindById(t *testing.T) {
 	query := regexp.QuoteMeta("SELECT id, name, provider, tier, monthly_premium, deductible, out_of_pocket_max, state, created_at, updated_at FROM plans WHERE id = $1")
 
 	now := time.Now()
-	rows := sqlmock.NewRows([]string{"id", "name", "provider", "tier", "monthly_premium", "deductible", "out_of_pocket_max", "state", "created_at", "updated_at"}).AddRow("1", "test", "test", "bronze", 50.00, 50.00, 50.00, "test", now, now)
+	rows := sqlmock.NewRows(
+		[]string{
+			"id",
+			"name",
+			"provider",
+			"tier",
+			"monthly_premium",
+			"deductible",
+			"out_of_pocket_max",
+			"state",
+			"created_at",
+			"updated_at",
+		},
+	).AddRow("1", "test", "test", "bronze", 50.00, 50.00, 50.00, "test", now, now)
 
 	mock.ExpectQuery(query).WithArgs(sqlmock.AnyArg()).WillReturnRows(rows)
 

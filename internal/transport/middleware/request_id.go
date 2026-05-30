@@ -2,8 +2,9 @@ package middleware
 
 import (
 	"context"
-	"github.com/google/uuid"
 	"net/http"
+
+	"github.com/google/uuid"
 )
 
 const RequestIDKey string = "request_id"

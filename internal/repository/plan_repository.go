@@ -27,7 +27,11 @@ func NewPlanRepository(postgres *infra.Postgresql) PlanRepository {
 func (r *PlanRepositoryImpl) FindByState(ctx context.Context, state string) ([]domain.Plan, error) {
 	var plans []domain.Plan
 
-	rows, err := r.postgres.Db.QueryContext(ctx, "SELECT id, name, provider, tier, monthly_premium, deductible, out_of_pocket_max, state, created_at, updated_at FROM plans WHERE state = $1", state)
+	rows, err := r.postgres.Db.QueryContext(
+		ctx,
+		"SELECT id, name, provider, tier, monthly_premium, deductible, out_of_pocket_max, state, created_at, updated_at FROM plans WHERE state = $1",
+		state,
+	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrPlanNotFound
@@ -38,7 +42,18 @@ func (r *PlanRepositoryImpl) FindByState(ctx context.Context, state string) ([]d
 
 	for rows.Next() {
 		var plan domain.Plan
-		err = rows.Scan(&plan.ID, &plan.Name, &plan.Provider, &plan.Tier, &plan.MonthlyPremium, &plan.Deductible, &plan.OutOfPocket, &plan.State, &plan.CreatedAt, &plan.UpdatedAt)
+		err = rows.Scan(
+			&plan.ID,
+			&plan.Name,
+			&plan.Provider,
+			&plan.Tier,
+			&plan.MonthlyPremium,
+			&plan.Deductible,
+			&plan.OutOfPocket,
+			&plan.State,
+			&plan.CreatedAt,
+			&plan.UpdatedAt,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -52,7 +67,22 @@ func (r *PlanRepositoryImpl) FindByState(ctx context.Context, state string) ([]d
 func (r *PlanRepositoryImpl) FindById(ctx context.Context, id string) (*domain.Plan, error) {
 	var plan domain.Plan
 
-	err := r.postgres.Db.QueryRowContext(ctx, "SELECT id, name, provider, tier, monthly_premium, deductible, out_of_pocket_max, state, created_at, updated_at FROM plans WHERE id = $1", id).Scan(&plan.ID, &plan.Name, &plan.Provider, &plan.Tier, &plan.MonthlyPremium, &plan.Deductible, &plan.OutOfPocket, &plan.State, &plan.CreatedAt, &plan.UpdatedAt)
+	err := r.postgres.Db.QueryRowContext(
+		ctx,
+		"SELECT id, name, provider, tier, monthly_premium, deductible, out_of_pocket_max, state, created_at, updated_at FROM plans WHERE id = $1",
+		id,
+	).Scan(
+		&plan.ID,
+		&plan.Name,
+		&plan.Provider,
+		&plan.Tier,
+		&plan.MonthlyPremium,
+		&plan.Deductible,
+		&plan.OutOfPocket,
+		&plan.State,
+		&plan.CreatedAt,
+		&plan.UpdatedAt,
+	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrPlanNotFound
