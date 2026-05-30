@@ -10,6 +10,7 @@ import (
 
 type PlanService interface {
 	GetByZipcode(ctx context.Context, zipcode string) ([]domain.Plan, error)
+	GetById(ctx context.Context, id string) (*domain.Plan, error)
 }
 
 var ErrPlanNotFound = errors.New("plan not found")
@@ -48,4 +49,15 @@ func (s *PlanServiceImpl) GetByZipcode(ctx context.Context, zipcode string) ([]d
 	}
 
 	return plans, nil
+}
+
+func (s *PlanServiceImpl) GetById(ctx context.Context, id string) (*domain.Plan, error) {
+	plan, err := s.repo.FindById(ctx, id)
+	if err != nil {
+		if errors.Is(err, repository.ErrPlanNotFound) {
+			return nil, ErrPlanNotFound
+		}
+	}
+
+	return plan, nil
 }

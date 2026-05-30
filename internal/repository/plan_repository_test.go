@@ -46,3 +46,39 @@ func TestPlanRepository_FindByState(t *testing.T) {
 		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
 }
+
+func TestPlanRepository_FindById(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	query := regexp.QuoteMeta("SELECT id, name, provider, tier, monthly_premium, deductible, out_of_pocket_max, state, created_at, updated_at FROM plans WHERE id = $1")
+
+	now := time.Now()
+	rows := sqlmock.NewRows([]string{"id", "name", "provider", "tier", "monthly_premium", "deductible", "out_of_pocket_max", "state", "created_at", "updated_at"}).AddRow("1", "test", "test", "bronze", 50.00, 50.00, 50.00, "test", now, now)
+
+	mock.ExpectQuery(query).WithArgs(sqlmock.AnyArg()).WillReturnRows(rows)
+
+	pg := &infra.Postgresql{
+		Db: db,
+	}
+
+	repo := &PlanRepositoryImpl{
+		postgres: pg,
+	}
+
+	plan, err := repo.FindById(context.Background(), "test")
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when finding plans by id", err)
+	}
+
+	if plan.ID != "1" {
+		t.Fatalf("id expected to be 1")
+	}
+
+	if err = mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+}

@@ -40,3 +40,34 @@ func (h *Handler) PlansGetByZipcode(w http.ResponseWriter, r *http.Request) {
 		Data:    plans,
 	})
 }
+
+func (h *Handler) PlanGetById(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+
+	var req dto.PlanIdRequest
+	req.Id = id
+
+	err := req.Validate()
+	if err != nil {
+		shared.SendJSONError(w, shared.ErrorResponse{Message: err.Error()}, http.StatusBadRequest)
+		return
+	}
+
+	plan, err := h.planService.GetById(r.Context(), req.Id)
+	if err != nil {
+		if errors.Is(err, service.ErrPlanNotFound) {
+			shared.SendJSONError(w, shared.ErrorResponse{Message: "Plan not found."}, http.StatusNotFound)
+			return
+		}
+
+		shared.SendJSONError(w, shared.ErrorResponse{Message: "Internal Server Error."}, http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(&dto.PlansResponse{
+		Success: true,
+		Data:    plan,
+	})
+}
