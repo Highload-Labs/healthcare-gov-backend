@@ -1,5 +1,5 @@
 import http from 'k6/http';
-import { check, sleep, fail } from 'k6';
+import {check, fail, sleep} from 'k6';
 
 export const options = {
     vus: 150,
@@ -24,7 +24,7 @@ export function setup() {
         password: 'test123456',
     });
 
-    const params = { headers: { 'Content-Type': 'application/json' } };
+    const params = {headers: {'Content-Type': 'application/json'}};
 
     console.log(`Pre-generating ${options.vus} unique sessions for VUs...`);
 
@@ -45,7 +45,7 @@ export function setup() {
 
     console.log(`Pre-generated done...`)
 
-    return { tokens: tokens };
+    return {tokens: tokens};
 }
 
 export default function (data) {

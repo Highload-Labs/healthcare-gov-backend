@@ -14,12 +14,13 @@ func main() {
 	// userRepository := memory.NewUserRepository()
 	userRepository := repository.NewUserRepository(pg)
 	coverageRepository := repository.NewCoverageRepository(pg)
-
 	refreshSessionRepository := repository.NewRefreshTokenRepository(pg)
+	planRepository := repository.NewPlanRepository(pg)
 
 	authService := service.NewAuthService(config.GetConfig(), userRepository, refreshSessionRepository)
 	coverageService := service.NewCoverageService(coverageRepository)
+	planService := service.NewPlanService(planRepository, coverageService)
 
-	server := transport.NewHTTP(authService, coverageService)
+	server := transport.NewHTTP(authService, coverageService, planService)
 	server.Serve()
 }

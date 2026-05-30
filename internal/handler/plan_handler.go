@@ -1,0 +1,94 @@
+package handler
+
+import (
+	"encoding/json"
+	"errors"
+	"net/http"
+	"strconv"
+
+	"github.com/Highload-Labs/healthcare-gov-backend/internal/handler/dto"
+	"github.com/Highload-Labs/healthcare-gov-backend/internal/service"
+	"github.com/Highload-Labs/healthcare-gov-backend/internal/shared"
+)
+
+func (h *Handler) PlansGetByZipcode(w http.ResponseWriter, r *http.Request) {
+	zipcode := r.URL.Query().Get("zipcode")
+	page := r.URL.Query().Get("page")
+	limit := r.URL.Query().Get("limit")
+
+	var req dto.PlansZipcodeRequest
+	req.Zipcode = zipcode
+
+	err := req.Validate()
+	if err != nil {
+		shared.SendJSONError(w, shared.ErrorResponse{Message: err.Error()}, http.StatusBadRequest)
+		return
+	}
+
+	pageInt, _ := strconv.Atoi(page)
+	limitInt, _ := strconv.Atoi(limit)
+
+	var pagination = &shared.Pagination{
+		Limit:      limitInt,
+		PageNumber: pageInt,
+	}
+
+	pagination.SettleValue()
+	plans, metadata, err := h.planService.GetByZipcode(r.Context(), zipcode, pagination)
+	if err != nil {
+		if errors.Is(err, service.ErrPlanNotFound) || errors.Is(err, service.ErrCoverageNotFound) {
+			shared.SendJSONError(
+				w,
+				shared.ErrorResponse{Message: "No plans available for this zipcode."},
+				http.StatusNotFound,
+			)
+			return
+		}
+
+		shared.SendJSONError(w, shared.ErrorResponse{Message: "Internal Server Error."}, http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(
+		dto.PlansResponse{
+			Success:  true,
+			Data:     plans,
+			Metadata: metadata,
+		},
+	)
+}
+
+func (h *Handler) PlanGetById(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+
+	var req dto.PlanIdRequest
+	req.Id = id
+
+	err := req.Validate()
+	if err != nil {
+		shared.SendJSONError(w, shared.ErrorResponse{Message: err.Error()}, http.StatusBadRequest)
+		return
+	}
+
+	plan, err := h.planService.GetById(r.Context(), req.Id)
+	if err != nil {
+		if errors.Is(err, service.ErrPlanNotFound) {
+			shared.SendJSONError(w, shared.ErrorResponse{Message: "Plan not found."}, http.StatusNotFound)
+			return
+		}
+
+		shared.SendJSONError(w, shared.ErrorResponse{Message: "Internal Server Error."}, http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(
+		&dto.PlansResponse{
+			Success: true,
+			Data:    plan,
+		},
+	)
+}

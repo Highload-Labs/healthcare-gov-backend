@@ -2,10 +2,11 @@ package handler
 
 import (
 	"encoding/json"
-	"github.com/Highload-Labs/healthcare-gov-backend/internal/handler/dto"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/Highload-Labs/healthcare-gov-backend/internal/handler/dto"
 )
 
 func TestHealthzGetHandler(t *testing.T) {
