@@ -13,10 +13,10 @@ import (
 func (h *Handler) CoverageGetByZipcodeHandler(w http.ResponseWriter, r *http.Request) {
 	zipcode := r.PathValue("zipcode")
 
-	var request dto.CoverageRequest
-	request.Zipcode = zipcode
+	var req dto.CoverageRequest
+	req.Zipcode = zipcode
 
-	err := request.Validate()
+	err := req.Validate()
 	if err != nil {
 		shared.SendJSONError(w, shared.ErrorResponse{Message: err.Error()}, http.StatusBadRequest)
 		return
@@ -36,7 +36,7 @@ func (h *Handler) CoverageGetByZipcodeHandler(w http.ResponseWriter, r *http.Req
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(&dto.CoverageResponse{
-		Status: true,
+		Success: true,
 		Data: &dto.CoverageResponseData{
 			Zipcode:   zipcode,
 			State:     coverage.State,

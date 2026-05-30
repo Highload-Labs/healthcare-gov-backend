@@ -11,8 +11,8 @@ type CoverageRequest struct {
 }
 
 type CoverageResponse struct {
-	Status bool                  `json:"status"`
-	Data   *CoverageResponseData `json:"data"`
+	Success bool                  `json:"success"`
+	Data    *CoverageResponseData `json:"data"`
 }
 
 type CoverageResponseData struct {
