@@ -55,6 +55,7 @@ func setupPprof() {
 func NewHTTP(
 	authService service.AuthService,
 	coverageService service.CoverageService,
+	planService service.PlanService,
 ) *HTTP {
 	mux := http.NewServeMux()
 
@@ -64,7 +65,9 @@ func NewHTTP(
 		setupPprof()
 	}
 
-	h := handler.NewHandler(mux, cfg, authService, coverageService)
+	authMiddleware := &middleware.AuthorizationMiddleware{AuthService: authService}
+
+	h := handler.NewHandler(mux, cfg, authService, coverageService, planService, authMiddleware)
 	h.InitializeRoutes()
 
 	wrappedMux := chain(

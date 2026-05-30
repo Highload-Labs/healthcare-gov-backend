@@ -5,6 +5,7 @@ import (
 
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/config"
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/service"
+	"github.com/Highload-Labs/healthcare-gov-backend/internal/transport/middleware"
 )
 
 type Handler struct {
@@ -13,6 +14,9 @@ type Handler struct {
 
 	authService     service.AuthService
 	coverageService service.CoverageService
+	planService     service.PlanService
+
+	authorizationMiddleware *middleware.AuthorizationMiddleware
 }
 
 func NewHandler(
@@ -20,12 +24,16 @@ func NewHandler(
 	cfg *config.Config,
 	authService service.AuthService,
 	coverageService service.CoverageService,
+	planService service.PlanService,
+	authorizationMiddleware *middleware.AuthorizationMiddleware,
 ) *Handler {
 	return &Handler{
-		mux:             mux,
-		config:          cfg,
-		authService:     authService,
-		coverageService: coverageService,
+		mux:                     mux,
+		config:                  cfg,
+		authService:             authService,
+		coverageService:         coverageService,
+		planService:             planService,
+		authorizationMiddleware: authorizationMiddleware,
 	}
 }
 
@@ -36,4 +44,6 @@ func (h *Handler) InitializeRoutes() {
 	h.mux.HandleFunc("GET /auth/refresh", h.AuthRefreshHandler)
 
 	h.mux.HandleFunc("GET /coverage/{zipcode}", h.CoverageGetByZipcodeHandler)
+
+	h.mux.HandleFunc("GET /plans", h.authorizationMiddleware.Authorization(http.HandlerFunc(h.PlansGetByZipcode)).ServeHTTP)
 }
