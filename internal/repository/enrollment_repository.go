@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"log/slog"
 	"time"
 
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/domain"
@@ -49,10 +48,6 @@ func (r *EnrollmentRepositoryImpl) LockByUserID(ctx context.Context, tx *sql.Tx,
 	if err != nil {
 		return err
 	}
-
-	var now time.Time
-	_ = tx.QueryRowContext(ctx, "SELECT now()").Scan(&now)
-	slog.Info("now time based on TX", "time", now)
 
 	return nil
 }
