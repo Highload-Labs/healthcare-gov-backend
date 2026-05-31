@@ -12,9 +12,10 @@ type Handler struct {
 	mux    *http.ServeMux
 	config *config.Config
 
-	authService     service.AuthService
-	coverageService service.CoverageService
-	planService     service.PlanService
+	authService       service.AuthService
+	coverageService   service.CoverageService
+	planService       service.PlanService
+	enrollmentService service.EnrollmentService
 
 	authorizationMiddleware *middleware.AuthorizationMiddleware
 }
@@ -25,6 +26,7 @@ func NewHandler(
 	authService service.AuthService,
 	coverageService service.CoverageService,
 	planService service.PlanService,
+	enrollmentService service.EnrollmentService,
 	authorizationMiddleware *middleware.AuthorizationMiddleware,
 ) *Handler {
 	return &Handler{
@@ -33,6 +35,7 @@ func NewHandler(
 		authService:             authService,
 		coverageService:         coverageService,
 		planService:             planService,
+		enrollmentService:       enrollmentService,
 		authorizationMiddleware: authorizationMiddleware,
 	}
 }
@@ -47,10 +50,14 @@ func (h *Handler) InitializeRoutes() {
 
 	h.mux.HandleFunc(
 		"GET /plans",
-		h.authorizationMiddleware.Authorization(http.HandlerFunc(h.PlansGetByZipcode)).ServeHTTP,
+		h.authorizationMiddleware.Authorization(http.HandlerFunc(h.PlansGetByZipcodeHandler)).ServeHTTP,
 	)
 	h.mux.HandleFunc(
 		"GET /plans/{id}",
-		h.authorizationMiddleware.Authorization(http.HandlerFunc(h.PlanGetById)).ServeHTTP,
+		h.authorizationMiddleware.Authorization(http.HandlerFunc(h.PlanGetByIdHandler)).ServeHTTP,
+	)
+	h.mux.HandleFunc(
+		"POST /enrollments",
+		h.authorizationMiddleware.Authorization(http.HandlerFunc(h.EnrollmentPostHandler)).ServeHTTP,
 	)
 }

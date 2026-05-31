@@ -11,7 +11,7 @@ import (
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/shared"
 )
 
-func (h *Handler) PlansGetByZipcode(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) PlansGetByZipcodeHandler(w http.ResponseWriter, r *http.Request) {
 	zipcode := r.URL.Query().Get("zipcode")
 	page := r.URL.Query().Get("page")
 	limit := r.URL.Query().Get("limit")
@@ -60,7 +60,7 @@ func (h *Handler) PlansGetByZipcode(w http.ResponseWriter, r *http.Request) {
 	)
 }
 
-func (h *Handler) PlanGetById(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) PlanGetByIdHandler(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 
 	var req dto.PlanIdRequest
