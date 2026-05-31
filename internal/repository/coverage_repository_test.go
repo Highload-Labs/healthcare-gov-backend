@@ -32,8 +32,8 @@ func TestCoverageRepository_FindByZipcode(t *testing.T) {
 		t.Fatalf("an error '%s' was not expected when finding coverage by zipcode", err)
 	}
 
-	if coverage.Id != "test" {
-		t.Fatalf("expected id 'test', got '%s'", coverage.Id)
+	if coverage.ID != "test" {
+		t.Fatalf("expected id 'test', got '%s'", coverage.ID)
 	}
 
 	if err = mock.ExpectationsWereMet(); err != nil {

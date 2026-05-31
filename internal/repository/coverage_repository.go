@@ -28,7 +28,7 @@ func (r *CoverageRepositoryImpl) FindByZipcode(ctx context.Context, zipcode stri
 
 	query := "SELECT id, state, zipcode_start, zipcode_end FROM coverages WHERE $1 BETWEEN zipcode_start AND zipcode_end LIMIT 1"
 	err := r.postgres.Db.QueryRowContext(ctx, query, zipcode).Scan(
-		&coverage.Id,
+		&coverage.ID,
 		&coverage.State,
 		&coverage.ZipcodeStart,
 		&coverage.ZipcodeEnd,

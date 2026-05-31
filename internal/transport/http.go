@@ -56,6 +56,7 @@ func NewHTTP(
 	authService service.AuthService,
 	coverageService service.CoverageService,
 	planService service.PlanService,
+	enrollmentService service.EnrollmentService,
 ) *HTTP {
 	mux := http.NewServeMux()
 
@@ -67,7 +68,7 @@ func NewHTTP(
 
 	authMiddleware := &middleware.AuthorizationMiddleware{AuthService: authService}
 
-	h := handler.NewHandler(mux, cfg, authService, coverageService, planService, authMiddleware)
+	h := handler.NewHandler(mux, cfg, authService, coverageService, planService, enrollmentService, authMiddleware)
 	h.InitializeRoutes()
 
 	wrappedMux := chain(

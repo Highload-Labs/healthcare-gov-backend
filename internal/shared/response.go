@@ -33,6 +33,10 @@ func SendJSONError(w http.ResponseWriter, responseStruct ErrorResponse, code int
 		responseStruct.Code = getCode(code)
 	}
 
+	if responseStruct.Success != false {
+		responseStruct.Success = false
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 	_ = json.NewEncoder(w).Encode(responseStruct)
