@@ -1,0 +1,11 @@
+CREATE TABLE IF NOT EXISTS enrollments
+(
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id),
+    plan_id UUID NOT NULL REFERENCES plans(id),
+    effective_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    end_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at        TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at        TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CHECK (end_date > effective_date)
+);
