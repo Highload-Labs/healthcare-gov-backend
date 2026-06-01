@@ -6,11 +6,14 @@ import (
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/config"
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/service"
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/transport/middleware"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type Handler struct {
 	mux    *http.ServeMux
 	config *config.Config
+	reg    *prometheus.Registry
 
 	authService       service.AuthService
 	coverageService   service.CoverageService
@@ -23,6 +26,7 @@ type Handler struct {
 func NewHandler(
 	mux *http.ServeMux,
 	cfg *config.Config,
+	reg *prometheus.Registry,
 	authService service.AuthService,
 	coverageService service.CoverageService,
 	planService service.PlanService,
@@ -32,6 +36,7 @@ func NewHandler(
 	return &Handler{
 		mux:                     mux,
 		config:                  cfg,
+		reg:                     reg,
 		authService:             authService,
 		coverageService:         coverageService,
 		planService:             planService,
@@ -41,6 +46,8 @@ func NewHandler(
 }
 
 func (h *Handler) InitializeRoutes() {
+	h.mux.Handle("/metrics", promhttp.HandlerFor(h.reg, promhttp.HandlerOpts{}))
+
 	h.mux.HandleFunc("GET /healthz", h.HealthzGetHandler)
 	h.mux.HandleFunc("POST /auth/register", h.AuthRegisterPostHandler)
 	h.mux.HandleFunc("POST /auth/login", h.AuthLoginPostHandler)

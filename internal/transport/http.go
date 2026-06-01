@@ -10,8 +10,11 @@ import (
 
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/config"
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/handler"
+	"github.com/Highload-Labs/healthcare-gov-backend/internal/infra"
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/service"
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/transport/middleware"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 )
 
 type HTTP struct {
@@ -68,7 +71,24 @@ func NewHTTP(
 
 	authMiddleware := &middleware.AuthorizationMiddleware{AuthService: authService}
 
-	h := handler.NewHandler(mux, cfg, authService, coverageService, planService, enrollmentService, authMiddleware)
+	reg := prometheus.NewRegistry()
+	reg.MustRegister(
+		collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
+		collectors.NewGoCollector(),
+	)
+
+	metrics := infra.NewMetrics(reg)
+
+	h := handler.NewHandler(
+		mux,
+		cfg,
+		reg,
+		authService,
+		coverageService,
+		planService,
+		enrollmentService,
+		authMiddleware,
+	)
 	h.InitializeRoutes()
 
 	wrappedMux := chain(
@@ -76,6 +96,7 @@ func NewHTTP(
 		middleware.RecoveryMiddleware(cfg.GoEnv),
 		middleware.RequestIDMiddleware,
 		middleware.LoggingMiddleware,
+		middleware.MetricsMiddleware(metrics),
 	)
 
 	srv := &http.Server{
