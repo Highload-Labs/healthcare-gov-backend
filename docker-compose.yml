@@ -9,7 +9,7 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     networks:
-      - app-network
+      - healthcare-network
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U ${DATABASE_USER} -d ${DATABASE_NAME}" ]
       interval: 5s
@@ -23,7 +23,7 @@ services:
     volumes:
       - ./migrations:/migrations:ro
     networks:
-      - app-network
+      - healthcare-network
     command:
       - -path=/migrations
       - -database=postgres://${DATABASE_USER}:${DATABASE_PASS}@postgres:5432/${DATABASE_NAME}?sslmode=disable
@@ -54,7 +54,7 @@ services:
       - ACCESS_TOKEN_EXPIRED
       - REFRESH_TOKEN_EXPIRED
     networks:
-      - app-network
+      - healthcare-network
     depends_on:
       db-migration:
         condition: service_completed_successfully
@@ -71,5 +71,5 @@ volumes:
     driver: local
 
 networks:
-  app-network:
-    driver: bridge
+  healthcare-network:
+    external: true
