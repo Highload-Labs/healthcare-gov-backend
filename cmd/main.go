@@ -10,10 +10,11 @@ import (
 
 func main() {
 	pg := infra.NewPostgresql(config.GetConfig())
+	redisConn := infra.NewRedisClient(config.GetConfig())
 
 	// userRepository := memory.NewUserRepository()
 	userRepository := repository.NewUserRepository(pg)
-	coverageRepository := repository.NewCoverageRepository(pg)
+	coverageRepository := repository.NewCoverageRepository(pg, redisConn)
 	refreshSessionRepository := repository.NewRefreshTokenRepository(pg)
 	planRepository := repository.NewPlanRepository(pg)
 	enrollmentRepository := repository.NewEnrollmentRepository(pg)

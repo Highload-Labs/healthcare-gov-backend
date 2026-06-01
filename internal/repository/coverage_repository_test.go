@@ -20,7 +20,7 @@ func TestCoverageRepository_FindByZipcode(t *testing.T) {
 		Db: db,
 	}
 
-	repo := NewCoverageRepository(pg)
+	repo := NewCoverageRepository(pg, nil)
 
 	rows := sqlmock.NewRows([]string{"id", "state", "zipcode_start", "zipcode_end"}).AddRow("test", "test", "1", "1")
 

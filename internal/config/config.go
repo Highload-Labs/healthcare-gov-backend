@@ -23,6 +23,10 @@ type Config struct {
 	DatabaseName    string
 	DatabaseSSLMode string
 
+	RedisHost string
+	RedisPort string
+	RedisDB   int
+
 	AccessTokenExpired   time.Duration
 	RefreshTokenExpired  time.Duration
 	JwtAccessSigningKey  []byte
@@ -88,6 +92,22 @@ func GetConfig() *Config {
 				databaseSSLMode = "disable"
 			}
 
+			redisHost := os.Getenv("REDIS_HOST")
+			if redisHost == "" {
+				slog.Error("configuration error", "details", "unable to determine redis host")
+			}
+
+			redisPort := os.Getenv("REDIS_PORT")
+			if redisPort == "" {
+				slog.Error("configuration error", "details", "unable to determine redis port")
+			}
+
+			redisDB := os.Getenv("REDIS_DB")
+			redisDBInt, err := strconv.Atoi(redisDB)
+			if err != nil {
+				slog.Error("configuration error", "details", err.Error())
+			}
+
 			accessTokenExpired, err := time.ParseDuration(os.Getenv("ACCESS_TOKEN_EXPIRED"))
 			if err != nil {
 				slog.Error("configuration error", "details", err.Error())
@@ -130,6 +150,9 @@ func GetConfig() *Config {
 				DatabasePass:         databasePass,
 				DatabaseName:         databaseName,
 				DatabaseSSLMode:      databaseSSLMode,
+				RedisHost:            redisHost,
+				RedisPort:            redisPort,
+				RedisDB:              redisDBInt,
 				AccessTokenExpired:   accessTokenExpired,
 				RefreshTokenExpired:  refreshTokenExpired,
 				JwtAccessSigningKey:  []byte(jwtAccessSigningKey),
