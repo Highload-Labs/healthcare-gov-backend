@@ -3,10 +3,13 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
+	"time"
 
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/domain"
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/infra"
+	"github.com/redis/go-redis/v9"
 )
 
 type PlanRepository interface {
@@ -17,12 +20,15 @@ type PlanRepository interface {
 
 var ErrPlanNotFound = errors.New("plan not found")
 
+var planCacheKey = "plan:id:"
+
 type PlanRepositoryImpl struct {
-	postgres *infra.Postgresql
+	postgres  *infra.Postgresql
+	redisConn *redis.Client
 }
 
-func NewPlanRepository(postgres *infra.Postgresql) PlanRepository {
-	return &PlanRepositoryImpl{postgres: postgres}
+func NewPlanRepository(postgres *infra.Postgresql, redisConn *redis.Client) PlanRepository {
+	return &PlanRepositoryImpl{postgres: postgres, redisConn: redisConn}
 }
 
 func (r *PlanRepositoryImpl) CountByState(ctx context.Context, state string) (int64, error) {
@@ -87,9 +93,19 @@ func (r *PlanRepositoryImpl) FindByState(ctx context.Context, state string, limi
 }
 
 func (r *PlanRepositoryImpl) FindById(ctx context.Context, id string) (*domain.Plan, error) {
+	cacheKey := planCacheKey + id
 	var plan domain.Plan
 
-	err := r.postgres.Db.QueryRowContext(
+	val, err := r.redisConn.Get(ctx, cacheKey).Result()
+	if err == nil {
+		if err = json.Unmarshal([]byte(val), &plan); err == nil {
+			return &plan, err
+		}
+	} else if !errors.Is(err, redis.Nil) {
+		return nil, err
+	}
+
+	err = r.postgres.Db.QueryRowContext(
 		ctx,
 		"SELECT id, name, provider, tier, monthly_premium, deductible, out_of_pocket_max, state, created_at, updated_at FROM plans WHERE id = $1",
 		id,
@@ -112,6 +128,20 @@ func (r *PlanRepositoryImpl) FindById(ctx context.Context, id string) (*domain.P
 
 		return nil, err
 	}
+
+	go func(p domain.Plan) {
+		backgroundCtx := context.Background()
+
+		jsonData, err := json.Marshal(p)
+		if err != nil {
+			return
+		}
+
+		err = r.redisConn.Set(backgroundCtx, "plan:id:"+p.ID, jsonData, 1*time.Hour).Err()
+		if err != nil {
+			return
+		}
+	}(plan)
 
 	return &plan, nil
 }

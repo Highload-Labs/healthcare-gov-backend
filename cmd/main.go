@@ -16,7 +16,7 @@ func main() {
 	userRepository := repository.NewUserRepository(pg)
 	coverageRepository := repository.NewCoverageRepository(pg, redisConn)
 	refreshSessionRepository := repository.NewRefreshTokenRepository(pg)
-	planRepository := repository.NewPlanRepository(pg)
+	planRepository := repository.NewPlanRepository(pg, redisConn)
 	enrollmentRepository := repository.NewEnrollmentRepository(pg)
 
 	authService := service.NewAuthService(config.GetConfig(), userRepository, refreshSessionRepository)

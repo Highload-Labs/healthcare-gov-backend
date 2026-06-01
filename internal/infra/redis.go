@@ -26,7 +26,7 @@ func NewRedisClient(cfg *config.Config) *redis.Client {
 		slog.Error("redis error", "redis ping failed", err.Error())
 	}
 
-	slog.Info("redis", "redis connect success")
+	slog.Info("infra", "redis", "redis connect success")
 
 	return rdb
 }

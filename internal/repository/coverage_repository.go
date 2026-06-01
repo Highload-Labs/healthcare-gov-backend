@@ -56,7 +56,10 @@ func (r *CoverageRepositoryImpl) FindByZipcode(ctx context.Context, zipcode stri
 
 	go func(zip string, state string) {
 		backgroundCtx := context.Background()
-		r.redisConn.Set(backgroundCtx, cacheKey, state, 0)
+		err = r.redisConn.Set(backgroundCtx, cacheKey, state, 0).Err()
+		if err != nil {
+			return
+		}
 	}(zipcode, coverage.State)
 
 	return &coverage, nil
