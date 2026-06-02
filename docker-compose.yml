@@ -51,9 +51,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: healthcare-backend
-    ports:
-      - "${SERVER_PORT}:8080"
     env_file:
       - .env
     networks:
