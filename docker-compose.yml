@@ -68,6 +68,16 @@ services:
       start_period: 5s
     restart: unless-stopped
 
+  node-exporter:
+    image: prom/node-exporter
+    container_name: healthcare-node-exporter
+    pid: host
+    ports:
+      - "9100:9100"
+    networks:
+      - healthcare-network
+    restart: unless-stopped
+
 volumes:
   pgdata:
     driver: local
