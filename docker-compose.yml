@@ -17,6 +17,21 @@ services:
       retries: 5
     restart: unless-stopped
 
+  redis:
+    image: redis:8.8.0
+    container_name: healthcare-redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redisdata:/data
+    networks:
+      - healthcare-network
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
   db-migration:
     image: migrate/migrate
     container_name: healthcare-migration
@@ -39,25 +54,15 @@ services:
     container_name: healthcare-backend
     ports:
       - "${SERVER_PORT}:8080"
-    environment:
-      - SERVER_PORT
-      - GO_ENV
-      - BCRYPT_COST
-      - DATABASE_HOST=postgres
-      - DATABASE_PORT=5432
-      - DATABASE_USER
-      - DATABASE_PASS
-      - DATABASE_NAME
-      - DATABASE_SSLMODE
-      - JWT_ACCESS_SIGNING_KEY
-      - JWT_REFRESH_SIGNING_KEY
-      - ACCESS_TOKEN_EXPIRED
-      - REFRESH_TOKEN_EXPIRED
+    env_file:
+      - .env
     networks:
       - healthcare-network
     depends_on:
       db-migration:
         condition: service_completed_successfully
+      redis:
+        condition: service_healthy
     healthcheck:
       test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8080/healthz" ]
       interval: 10s
@@ -68,6 +73,8 @@ services:
 
 volumes:
   pgdata:
+    driver: local
+  redisdata:
     driver: local
 
 networks:

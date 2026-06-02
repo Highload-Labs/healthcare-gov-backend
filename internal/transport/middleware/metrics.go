@@ -35,11 +35,13 @@ func MetricsMiddleware(m *infra.Metrics) func(http.Handler) http.Handler {
 					pattern = r.URL.Path
 				}
 
+				statusStr := strconv.Itoa(rw.status)
+
 				if rw.status >= 500 {
-					m.HttpRequestsFailedTotal.WithLabelValues(r.Method, pattern).Inc()
+					m.HttpRequestsFailedTotal.WithLabelValues(statusStr, r.Method, pattern).Inc()
 				}
 
-				m.HttpRequestsTotal.WithLabelValues(strconv.Itoa(rw.status), r.Method, pattern).Inc()
+				m.HttpRequestsTotal.WithLabelValues(statusStr, r.Method, pattern).Inc()
 				m.HttpRequestsDuration.WithLabelValues(r.Method, pattern).Observe(duration)
 			},
 		)

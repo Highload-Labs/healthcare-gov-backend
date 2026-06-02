@@ -14,4 +14,4 @@ CREATE TABLE IF NOT EXISTS plans
     updated_at        TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_plans_state ON plans (state);
+CREATE INDEX idx_plans_state ON plans (state, id);

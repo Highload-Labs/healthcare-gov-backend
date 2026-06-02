@@ -4,30 +4,50 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"time"
 
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/domain"
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/infra"
+	"github.com/redis/go-redis/v9"
 )
 
 var ErrCoverageNotFound = errors.New("coverage not found")
+
+var coverageCacheKey = "coverage:zip:"
 
 type CoverageRepository interface {
 	FindByZipcode(ctx context.Context, zipcode string) (*domain.Coverage, error)
 }
 
 type CoverageRepositoryImpl struct {
-	postgres *infra.Postgresql
+	postgres  *infra.Postgresql
+	redisConn *redis.Client
+	metrics   *infra.Metrics
 }
 
-func NewCoverageRepository(postgres *infra.Postgresql) CoverageRepository {
-	return &CoverageRepositoryImpl{postgres: postgres}
+func NewCoverageRepository(
+	postgres *infra.Postgresql,
+	redisConn *redis.Client,
+	metrics *infra.Metrics,
+) CoverageRepository {
+	return &CoverageRepositoryImpl{postgres: postgres, redisConn: redisConn, metrics: metrics}
 }
 
 func (r *CoverageRepositoryImpl) FindByZipcode(ctx context.Context, zipcode string) (*domain.Coverage, error) {
+	cacheKey := coverageCacheKey + zipcode
+
+	stateVal, err := r.redisConn.Get(ctx, cacheKey).Result()
+	if err == nil {
+		r.metrics.CacheRequestsTotal.WithLabelValues("coverage", "hit").Inc()
+		return &domain.Coverage{State: stateVal}, nil
+	} else if !errors.Is(err, redis.Nil) {
+		return nil, err
+	}
+
 	var coverage domain.Coverage
 
 	query := "SELECT id, state, zipcode_start, zipcode_end FROM coverages WHERE $1 BETWEEN zipcode_start AND zipcode_end LIMIT 1"
-	err := r.postgres.Db.QueryRowContext(ctx, query, zipcode).Scan(
+	err = r.postgres.Db.QueryRowContext(ctx, query, zipcode).Scan(
 		&coverage.ID,
 		&coverage.State,
 		&coverage.ZipcodeStart,
@@ -41,5 +61,13 @@ func (r *CoverageRepositoryImpl) FindByZipcode(ctx context.Context, zipcode stri
 		return nil, err
 	}
 
+	backgroundCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	go func(backgroundCtx context.Context, zip string, state string) {
+		defer cancel()
+
+		_ = r.redisConn.Set(backgroundCtx, cacheKey, state, 0).Err()
+	}(backgroundCtx, zipcode, coverage.State)
+
+	r.metrics.CacheRequestsTotal.WithLabelValues("coverage", "miss").Inc()
 	return &coverage, nil
 }
