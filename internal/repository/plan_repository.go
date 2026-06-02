@@ -25,10 +25,11 @@ var planCacheKey = "plan:id:"
 type PlanRepositoryImpl struct {
 	postgres  *infra.Postgresql
 	redisConn *redis.Client
+	metrics   *infra.Metrics
 }
 
-func NewPlanRepository(postgres *infra.Postgresql, redisConn *redis.Client) PlanRepository {
-	return &PlanRepositoryImpl{postgres: postgres, redisConn: redisConn}
+func NewPlanRepository(postgres *infra.Postgresql, redisConn *redis.Client, metrics *infra.Metrics) PlanRepository {
+	return &PlanRepositoryImpl{postgres: postgres, redisConn: redisConn, metrics: metrics}
 }
 
 func (r *PlanRepositoryImpl) CountByState(ctx context.Context, state string) (int64, error) {
@@ -67,6 +68,7 @@ func (r *PlanRepositoryImpl) FindByState(ctx context.Context, state string, limi
 
 		return nil, err
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var plan domain.Plan
@@ -99,6 +101,7 @@ func (r *PlanRepositoryImpl) FindById(ctx context.Context, id string) (*domain.P
 	val, err := r.redisConn.Get(ctx, cacheKey).Result()
 	if err == nil {
 		if err = json.Unmarshal([]byte(val), &plan); err == nil {
+			r.metrics.CacheRequestsTotal.WithLabelValues("plan", "hit").Inc()
 			return &plan, err
 		}
 	} else if !errors.Is(err, redis.Nil) {
@@ -141,5 +144,6 @@ func (r *PlanRepositoryImpl) FindById(ctx context.Context, id string) (*domain.P
 		_ = r.redisConn.Set(backgroundCtx, "plan:id:"+p.ID, jsonData, 1*time.Hour).Err()
 	}(backgroundCtx, plan)
 
+	r.metrics.CacheRequestsTotal.WithLabelValues("plan", "miss").Inc()
 	return &plan, nil
 }

@@ -22,10 +22,15 @@ type CoverageRepository interface {
 type CoverageRepositoryImpl struct {
 	postgres  *infra.Postgresql
 	redisConn *redis.Client
+	metrics   *infra.Metrics
 }
 
-func NewCoverageRepository(postgres *infra.Postgresql, redisConn *redis.Client) CoverageRepository {
-	return &CoverageRepositoryImpl{postgres: postgres, redisConn: redisConn}
+func NewCoverageRepository(
+	postgres *infra.Postgresql,
+	redisConn *redis.Client,
+	metrics *infra.Metrics,
+) CoverageRepository {
+	return &CoverageRepositoryImpl{postgres: postgres, redisConn: redisConn, metrics: metrics}
 }
 
 func (r *CoverageRepositoryImpl) FindByZipcode(ctx context.Context, zipcode string) (*domain.Coverage, error) {
@@ -33,6 +38,7 @@ func (r *CoverageRepositoryImpl) FindByZipcode(ctx context.Context, zipcode stri
 
 	stateVal, err := r.redisConn.Get(ctx, cacheKey).Result()
 	if err == nil {
+		r.metrics.CacheRequestsTotal.WithLabelValues("coverage", "hit").Inc()
 		return &domain.Coverage{State: stateVal}, nil
 	} else if !errors.Is(err, redis.Nil) {
 		return nil, err
@@ -62,5 +68,6 @@ func (r *CoverageRepositoryImpl) FindByZipcode(ctx context.Context, zipcode stri
 		_ = r.redisConn.Set(backgroundCtx, cacheKey, state, 0).Err()
 	}(backgroundCtx, zipcode, coverage.State)
 
+	r.metrics.CacheRequestsTotal.WithLabelValues("coverage", "miss").Inc()
 	return &coverage, nil
 }

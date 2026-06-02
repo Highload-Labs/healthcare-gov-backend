@@ -14,7 +14,6 @@ import (
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/service"
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/transport/middleware"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/collectors"
 )
 
 type HTTP struct {
@@ -60,6 +59,8 @@ func NewHTTP(
 	coverageService service.CoverageService,
 	planService service.PlanService,
 	enrollmentService service.EnrollmentService,
+	reg *prometheus.Registry,
+	metrics *infra.Metrics,
 ) *HTTP {
 	mux := http.NewServeMux()
 
@@ -70,14 +71,6 @@ func NewHTTP(
 	}
 
 	authMiddleware := &middleware.AuthorizationMiddleware{AuthService: authService}
-
-	reg := prometheus.NewRegistry()
-	reg.MustRegister(
-		collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
-		collectors.NewGoCollector(),
-	)
-
-	metrics := infra.NewMetrics(reg)
 
 	h := handler.NewHandler(
 		mux,
