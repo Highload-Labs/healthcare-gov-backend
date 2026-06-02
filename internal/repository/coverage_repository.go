@@ -55,13 +55,12 @@ func (r *CoverageRepositoryImpl) FindByZipcode(ctx context.Context, zipcode stri
 		return nil, err
 	}
 
-	//nolint:gosec // G118: Intentional context detachment to prevent request cancellation from cutting off async cache filling
-	go func(zip string, state string) {
-		backgroundCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	backgroundCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	go func(backgroundCtx context.Context, zip string, state string) {
 		defer cancel()
 
 		_ = r.redisConn.Set(backgroundCtx, cacheKey, state, 0).Err()
-	}(zipcode, coverage.State)
+	}(backgroundCtx, zipcode, coverage.State)
 
 	return &coverage, nil
 }

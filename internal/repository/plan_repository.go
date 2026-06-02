@@ -129,9 +129,8 @@ func (r *PlanRepositoryImpl) FindById(ctx context.Context, id string) (*domain.P
 		return nil, err
 	}
 
-	//nolint:gosec // cache population intentionally detached from request lifecycle
-	go func(p domain.Plan) {
-		backgroundCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	backgroundCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	go func(backgroundCtx context.Context, p domain.Plan) {
 		defer cancel()
 
 		jsonData, err := json.Marshal(p)
@@ -140,7 +139,7 @@ func (r *PlanRepositoryImpl) FindById(ctx context.Context, id string) (*domain.P
 		}
 
 		_ = r.redisConn.Set(backgroundCtx, "plan:id:"+p.ID, jsonData, 1*time.Hour).Err()
-	}(plan)
+	}(backgroundCtx, plan)
 
 	return &plan, nil
 }
