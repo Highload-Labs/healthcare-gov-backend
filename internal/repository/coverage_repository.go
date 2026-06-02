@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"time"
 
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/domain"
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/infra"
@@ -54,12 +55,12 @@ func (r *CoverageRepositoryImpl) FindByZipcode(ctx context.Context, zipcode stri
 		return nil, err
 	}
 
+	//nolint:gosec // G118: Intentional context detachment to prevent request cancellation from cutting off async cache filling
 	go func(zip string, state string) {
-		backgroundCtx := context.Background()
-		err = r.redisConn.Set(backgroundCtx, cacheKey, state, 0).Err()
-		if err != nil {
-			return
-		}
+		backgroundCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+
+		_ = r.redisConn.Set(backgroundCtx, cacheKey, state, 0).Err()
 	}(zipcode, coverage.State)
 
 	return &coverage, nil
