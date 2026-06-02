@@ -9,6 +9,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/infra"
 	"github.com/go-redis/redismock/v9"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 func TestPlanRepository_CountByState(t *testing.T) {
@@ -127,9 +128,12 @@ func TestPlanRepository_FindById_CacheHit(t *testing.T) {
 		Db: db,
 	}
 
+	metrics := infra.NewMetrics(prometheus.DefaultRegisterer)
+
 	repo := &PlanRepositoryImpl{
 		postgres:  pg,
 		redisConn: redisConn,
+		metrics:   metrics,
 	}
 
 	id := "1"

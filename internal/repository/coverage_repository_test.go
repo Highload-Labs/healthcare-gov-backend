@@ -7,6 +7,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/Highload-Labs/healthcare-gov-backend/internal/infra"
 	"github.com/go-redis/redismock/v9"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 func TestCoverageRepository_FindByZipcode_CacheHit(t *testing.T) {
@@ -27,7 +28,9 @@ func TestCoverageRepository_FindByZipcode_CacheHit(t *testing.T) {
 
 	redisMock.ExpectGet(cacheKey).SetVal("California")
 
-	repo := NewCoverageRepository(pg, redisConn)
+	metrics := infra.NewMetrics(prometheus.DefaultRegisterer)
+
+	repo := NewCoverageRepository(pg, redisConn, metrics)
 
 	//rows := sqlmock.NewRows([]string{"id", "state", "zipcode_start", "zipcode_end"}).AddRow("test", "test", "1", "1")
 	//
