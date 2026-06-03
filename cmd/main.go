@@ -12,6 +12,8 @@ import (
 
 func main() {
 	pg := infra.NewPostgresql(config.GetConfig())
+	infra.RunDatabaseMigrations(pg)
+
 	redisConn := infra.NewRedisClient(config.GetConfig())
 
 	reg := prometheus.NewRegistry()
