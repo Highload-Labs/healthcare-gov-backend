@@ -52,6 +52,9 @@ func (s *AuthServiceImpl) RefreshSession(ctx context.Context, earlyRefreshToken,
 	}
 
 	err = s.refreshSessionRepository.Revoke(ctx, hashedEarlyRefreshToken)
+	if err != nil {
+		return
+	}
 
 	hashedRefreshToken, err := shared.Hash(refreshToken)
 	if err != nil {
