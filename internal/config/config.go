@@ -53,7 +53,7 @@ func GetConfig() *Config {
 
 			bcryptCost, err := strconv.Atoi(os.Getenv("BCRYPT_COST"))
 			if err != nil {
-				slog.Error("configuration error", "details", err.Error())
+				slog.Error("configuration error", "details", "unable to parse BCRYPT_COST")
 				os.Exit(1)
 			}
 
@@ -105,12 +105,12 @@ func GetConfig() *Config {
 			redisDB := os.Getenv("REDIS_DB")
 			redisDBInt, err := strconv.Atoi(redisDB)
 			if err != nil {
-				slog.Error("configuration error", "details", err.Error())
+				slog.Error("configuration error", "key", "REDIS_DB", "error", err)
 			}
 
 			accessTokenExpired, err := time.ParseDuration(os.Getenv("ACCESS_TOKEN_EXPIRED"))
 			if err != nil {
-				slog.Error("configuration error", "details", err.Error())
+				slog.Error("configuration error", "key", "ACCESS_TOKEN_EXPIRED", "error", err)
 				os.Exit(1)
 			}
 
@@ -120,7 +120,7 @@ func GetConfig() *Config {
 
 			refreshTokenExpired, err := time.ParseDuration(os.Getenv("REFRESH_TOKEN_EXPIRED"))
 			if err != nil {
-				slog.Error("configuration error", "details", err.Error())
+				slog.Error("configuration error", "key", "REFRESH_TOKEN_EXPIRED", "error", err)
 				os.Exit(1)
 			}
 
