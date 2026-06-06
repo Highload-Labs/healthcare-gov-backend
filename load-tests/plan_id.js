@@ -1,16 +1,16 @@
 import http from 'k6/http';
-import { check } from 'k6';
+import { check, sleep, fail } from 'k6';
 
 const BASE_URL = 'http://13.212.195.147';
-const ZIP_CODES = ['50000'];
+const PLAN_IDS = ['8db0f547-a5e6-474e-87fb-91ec665806aa'];
 
 export const options = {
-    vus: 150,
+    vus: 600,
     duration: '30s',
     summaryTrendStats: ['min', 'avg', 'med', 'max', 'p(50)', 'p(95)', 'p(99)'],
     thresholds: {
         http_req_failed: ['rate<0.01'],
-        'http_req_duration{name:GetPlansList}': ['p(95)<150'],
+        'http_req_duration{name:GetPlanDetail}': ['p(95)<150'],
     }
 };
 
@@ -30,14 +30,11 @@ export function setup() {
     }
 
     const res_json = res.json();
-
     const token = res_json.data?.access_token || res_json.data?.refresh_token;
 
     if (!token) {
         fail(`Setup mismatch. Token not found in response body: ${res.body}`);
     }
-
-    console.log('Login successful. Token distributed to all VUs.');
 
     return { authToken: token };
 }
@@ -50,17 +47,17 @@ export default function (data) {
         }
     };
 
-    const randomZip = ZIP_CODES[0];
-    const listUrl = `${BASE_URL}/plans?zipcode=${randomZip}`;
+    const randomPlanId = PLAN_IDS[Math.floor(Math.random() * PLAN_IDS.length)];
+    const detailUrl = `${BASE_URL}/plans/${randomPlanId}`;
 
-    const listRes = http.get(listUrl, { ...params, tags: { name: 'GetPlansList' } });
+    const detailRes = http.get(detailUrl, { ...params, tags: { name: 'GetPlanDetail' } });
 
-    check(listRes, {
-        'list status is 200': (r) => r.status === 200,
-        'has plans data': (r) => {
+    check(detailRes, {
+        'detail status is 200': (r) => r.status === 200,
+        'has valid response': (r) => {
             try {
                 const body = JSON.parse(r.body);
-                return body.success && Array.isArray(body.data) && body.data.length > 0;
+                return body.hasOwnProperty('data') || body.success === true;
             } catch (e) {
                 return false;
             }
