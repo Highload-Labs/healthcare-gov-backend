@@ -2,39 +2,29 @@ package repository
 
 import (
 	"context"
-	"regexp"
 	"testing"
 	"time"
 
-	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/Highload-Labs/healthcare-gov-backend/internal/infra"
+	"github.com/go-redis/redismock/v9"
 )
 
 func TestRefreshSessionRepository_Create(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
-	defer db.Close()
-
-	pg := &infra.Postgresql{
-		Db: db,
-	}
+	redisConn, mock := redismock.NewClientMock()
 
 	fixedExpiry := time.Now().Add(time.Hour)
+	expectedTTL := time.Until(fixedExpiry)
 
-	query := regexp.QuoteMeta("INSERT INTO refresh_sessions (user_id, token_hash, expires_at) VALUES ($1, $2, $3)")
-	mock.ExpectExec(query).WithArgs(
-		"1",
-		"test-token-hash",
-		fixedExpiry,
-	).WillReturnResult(sqlmock.NewResult(1, 1))
+	userID := "1"
+	tokenHash := "test-token-hash"
+	expectedKey := refreshSessionCacheKey + tokenHash
+
+	mock.ExpectSet(expectedKey, userID, expectedTTL).SetVal("OK")
 
 	repo := &RefreshSessionRepositoryImpl{
-		postgres: pg,
+		redisConn: redisConn,
 	}
 
-	err = repo.Create(context.Background(), "1", "test-token-hash", fixedExpiry)
+	err := repo.Create(context.Background(), userID, tokenHash, fixedExpiry)
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when creating a refresh session", err)
 	}

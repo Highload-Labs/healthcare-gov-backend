@@ -12,6 +12,8 @@ import (
 
 func main() {
 	pg := infra.NewPostgresql(config.GetConfig())
+	infra.RunDatabaseMigrations(pg)
+
 	redisConn := infra.NewRedisClient(config.GetConfig())
 
 	reg := prometheus.NewRegistry()
@@ -25,7 +27,7 @@ func main() {
 	// userRepository := memory.NewUserRepository()
 	userRepository := repository.NewUserRepository(pg)
 	coverageRepository := repository.NewCoverageRepository(pg, redisConn, metrics)
-	refreshSessionRepository := repository.NewRefreshTokenRepository(pg)
+	refreshSessionRepository := repository.NewRefreshTokenRepository(redisConn)
 	planRepository := repository.NewPlanRepository(pg, redisConn, metrics)
 	enrollmentRepository := repository.NewEnrollmentRepository(pg)
 
