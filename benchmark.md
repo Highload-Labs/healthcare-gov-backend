@@ -16,12 +16,17 @@ http_req_duration.......................................................: min=28
 http_reqs...............................................................: 74019 2464.497292/s
 ```
 
+<img width="1574" height="839" alt="register_100" src="https://github.com/user-attachments/assets/d61aac84-c7ed-4a4a-b3d6-b535954bc2cf" />
+
 150VUs:
 ```bash
 ✓ 'rate<0.01' rate=0.00%
 http_req_duration.......................................................: min=29.09ms avg=53.11ms med=46.6ms  max=1.34s p(50)=46.6ms  p(95)=79.97ms p(99)=146.08ms
 http_reqs...............................................................: 84459 2810.622048/s
 ```
+
+<img width="1573" height="823" alt="register_150" src="https://github.com/user-attachments/assets/ccdd7bd5-9e59-4f63-8523-9f8cd664f560" />
+
 
 Postgres Profiling Result:
 ```bash
@@ -42,12 +47,18 @@ http_req_duration.......................................................: min=26
 http_reqs...............................................................: 95685 2878.380704/s
 ```
 
+<img width="1591" height="835" alt="refresh_100" src="https://github.com/user-attachments/assets/cc1c1d27-2f06-448b-af15-1768c3d4f701" />
+
+
 150VUs:
 ```bash
 ✓ 'rate<0.01' rate=0.00%
 http_req_duration.......................................................: min=26.57ms avg=34.04ms med=32.22ms max=496.42ms p(50)=32.22ms p(95)=42.22ms p(99)=54.91ms
 http_reqs...............................................................: 131898 3795.742677/s
 ```
+
+<img width="1545" height="847" alt="refresh_150" src="https://github.com/user-attachments/assets/ab251b32-0cc2-441f-adad-d4ee84755546" />
+
 
 Postgres Profiling Result:
 ```bash
@@ -72,6 +83,9 @@ http_reqs...............................................................: 379788
 ✓ status is 200
 ```
 
+<img width="1568" height="839" alt="coverage-400" src="https://github.com/user-attachments/assets/9ed3b198-60df-4dda-ba6d-047dab0499b0" />
+
+
 500VUs:
 ```bash
 ✓ 'rate<0.01' rate=0.00%
@@ -80,6 +94,9 @@ http_reqs...............................................................: 397373
 ✗ status is 200
 ↳  99% — ✓ 397372 / ✗ 1
 ```
+
+<img width="1590" height="835" alt="coverage-500" src="https://github.com/user-attachments/assets/dbfa5dcb-6378-4560-8bd0-a01c92a9a7d3" />
+
 
 Postgres Profiling Result:
 ```bash
@@ -103,6 +120,9 @@ http_reqs...............................................................: 83085 
 ✓ has plans data
 ```
 
+<img width="1562" height="812" alt="plans_100" src="https://github.com/user-attachments/assets/9ef909c3-461e-4a11-b57c-0628574ffe0c" />
+
+
 150VUs:
 ```bash
 ✓ 'rate<0.01' rate=0.00%
@@ -111,6 +131,9 @@ http_reqs...............................................................: 75190 
 ✓ list status is 200
 ✓ has plans
 ```
+
+<img width="1595" height="821" alt="plans_150" src="https://github.com/user-attachments/assets/ff1734c5-5b3f-4f57-a3d9-ea03c933dc3c" />
+
 
 Postgres Profiling Result:
 ```bash
@@ -137,6 +160,9 @@ http_reqs...............................................................: 317954
 ✓ has valid response
 ```
 
+<img width="1551" height="814" alt="plan_id_500" src="https://github.com/user-attachments/assets/ad93ddb6-0d68-4258-95c9-9fc0d85756ea" />
+
+
 600VUs:
 ```bash
 ✓ 'rate<0.01' rate=0.08%
@@ -147,6 +173,9 @@ http_reqs...............................................................: 322819
 ✗ has valid response
 ↳  99% — ✓ 322550 / ✗ 268
 ```
+
+<img width="1565" height="833" alt="plan_id_600" src="https://github.com/user-attachments/assets/02a291c0-da8b-42e0-87cd-e936134a574c" />
+
 
 Postgres Profiling Result:
 ```bash
